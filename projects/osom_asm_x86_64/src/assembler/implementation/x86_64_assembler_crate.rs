@@ -23,13 +23,13 @@ impl X86_64Assembler {
                 // The only two special instructions that have different encoding
                 // depending on the context. Handled through fragmentation.
                 Instruction::Jump_Label { dst } => {
-                    let new_fragment = Fragment::Relaxable_Jump { variant: self.relaxation_variant(), label: dst.clone() };
-                    self.push_new_fragment(new_fragment);
+                    let new_fragment = Fragment::Relaxable_Jump { variant: self._relaxation_variant(), label: dst.clone() };
+                    self._push_new_fragment(new_fragment);
                     Ok(())
                 }
                 Instruction::CondJump_Label { condition, dst } => {
-                    let new_fragment = Fragment::Relaxable_CondJump { variant: self.relaxation_variant(), condition: condition.clone(), label: dst.clone() };
-                    self.push_new_fragment(new_fragment);
+                    let new_fragment = Fragment::Relaxable_CondJump { variant: self._relaxation_variant(), condition: condition.clone(), label: dst.clone() };
+                    self._push_new_fragment(new_fragment);
                     Ok(())
                 }
 
@@ -141,11 +141,11 @@ impl X86_64Assembler {
                 Instruction::Xor_MemReg { dst, src } => todo!(),
                 Instruction::Xor_RegMem { dst, src } => todo!(),
                 Instruction::SetPrivate_Label { label } => {
-                    self.insert_label(label.clone())?;
+                    self._insert_label(label.clone())?;
                     Ok(())
                 }
                 Instruction::SetPublic_Label { label } => {
-                    self.insert_label(label.clone())?;
+                    self._insert_label(label.clone())?;
                     self.public_labels.push(label.clone()); 
                     Ok(())
                 }

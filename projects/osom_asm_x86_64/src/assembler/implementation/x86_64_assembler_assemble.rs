@@ -25,11 +25,11 @@ impl X86_64Assembler {
 }
 
 
-fn calculate_initial_offsets(core_emitter: &X86_64Assembler) -> Result<HashMap<FragmentOrderId, u32>, AssembleError> {
-    let mut result = HashMap::with_capacity(core_emitter.fragments_count as usize);
+fn calculate_initial_offsets(asm: &X86_64Assembler) -> Result<HashMap<FragmentOrderId, u32>, AssembleError> {
+    let mut result = HashMap::with_capacity(asm.fragments_count as usize);
 
-    let start = fragment_at_index!(core_emitter, 0) as *const Fragment;
-    let end = fragment_end!(core_emitter);
+    let start = fragment_at_index!(asm, 0) as *const Fragment;
+    let end = fragment_end!(asm);
     let get_id = |fragment: *const Fragment| -> FragmentOrderId {
         let u8_fragment = fragment.cast::<u8>();
         let u8_start = start.cast::<u8>();
@@ -52,9 +52,9 @@ fn calculate_initial_offsets(core_emitter: &X86_64Assembler) -> Result<HashMap<F
     Ok(result)
 }
 
-fn relax_instructions_and_update_offsets(core_emitter: &mut X86_64Assembler, offsets: &mut HashMap<FragmentOrderId, u32>) -> Result<(), AssembleError> {
-    let start = fragment_at_index_mut!(core_emitter, 0) as *mut Fragment;
-    let end = fragment_end!(core_emitter);
+fn relax_instructions_and_update_offsets(asm: &mut X86_64Assembler, offsets: &mut HashMap<FragmentOrderId, u32>) -> Result<(), AssembleError> {
+    let start = fragment_at_index_mut!(asm, 0) as *mut Fragment;
+    let end = fragment_end!(asm);
 
     let get_id = |fragment: *const Fragment| -> FragmentOrderId {
         let u8_fragment = fragment.cast::<u8>();
@@ -64,13 +64,13 @@ fn relax_instructions_and_update_offsets(core_emitter: &mut X86_64Assembler, off
     };
 
     let get_position = |label: &Label, offsets: &HashMap<FragmentOrderId, u32>| -> Result<u32, AssembleError> {
-        let label_offset = match core_emitter.label_offsets.get(&label) {
+        let label_offset = match asm.label_offsets.get(&label) {
             Some(label_offset) => label_offset,
             None => return Err(AssembleError::LabelNotSet(label.clone()))
         };
 
         let fragment_index = label_offset.fragment_id.index();
-        let fragment = fragment_at_index!(core_emitter, fragment_index);
+        let fragment = fragment_at_index!(asm, fragment_index);
 
         let relaxation_offset = match fragment {
             Fragment::Bytes { .. } => 0,
@@ -115,7 +115,7 @@ fn relax_instructions_and_update_offsets(core_emitter: &mut X86_64Assembler, off
                     if *variant == RelaxationVariant::Short {
                         let label_position = get_position(label, offsets)? as isize;
                         let diff = current_fragment_offset - label_position - const_sizes::SHORT_JUMP as isize;
-                        if diff < i8::MIN as isize || diff > i8::MAX as isize {
+                        if (diff < i8::MIN as isize - 3) || (diff > i8::MAX as isize - 3) {
                             *variant = RelaxationVariant::Long;
                             has_changes = true;
                             let add = const_sizes::LONG_JUMP - const_sizes::SHORT_JUMP;
@@ -127,7 +127,7 @@ fn relax_instructions_and_update_offsets(core_emitter: &mut X86_64Assembler, off
                     if *variant == RelaxationVariant::Short {
                         let label_position = get_position(label, offsets)? as isize;
                         let diff = current_fragment_offset - label_position - const_sizes::SHORT_COND_JUMP as isize;
-                        if diff < i8::MIN as isize || diff > i8::MAX as isize {
+                        if (diff < i8::MIN as isize - 3) || (diff > i8::MAX as isize - 3) {
                             *variant = RelaxationVariant::Long;
                             has_changes = true;
                             let add = const_sizes::LONG_COND_JUMP - const_sizes::SHORT_COND_JUMP;
@@ -150,12 +150,12 @@ fn relax_instructions_and_update_offsets(core_emitter: &mut X86_64Assembler, off
 }
 
 
-fn calculate_labels_map(core_emitter: &X86_64Assembler, offsets: &HashMap<FragmentOrderId, u32>) -> Result<HashMap<Label, usize>, AssembleError> {
-    let mut result = HashMap::with_capacity(core_emitter.label_offsets.len());
+fn calculate_labels_map(asm: &X86_64Assembler, offsets: &HashMap<FragmentOrderId, u32>) -> Result<HashMap<Label, usize>, AssembleError> {
+    let mut result = HashMap::with_capacity(asm.label_offsets.len());
 
-    for (label, label_offset) in &core_emitter.label_offsets {
+    for (label, label_offset) in &asm.label_offsets {
         let fragment_index = label_offset.fragment_id.index();
-        let fragment = fragment_at_index!(core_emitter, fragment_index);
+        let fragment = fragment_at_index!(asm, fragment_index);
         let relaxation_offset = match fragment {
             Fragment::Bytes { .. } => 0,
             _ => fragment.data_length()
@@ -170,26 +170,26 @@ fn calculate_labels_map(core_emitter: &X86_64Assembler, offsets: &HashMap<Fragme
 }
 
 
-fn patch_label_references(core_emitter: &mut X86_64Assembler, labels_map: &HashMap<Label, usize>) -> Result<(), AssembleError> {
+fn patch_label_references(asm: &mut X86_64Assembler, labels_map: &HashMap<Label, usize>) -> Result<(), AssembleError> {
     // TODO
     Ok(())
 }
 
 
-fn emit_fragments(core_emitter: &X86_64Assembler, labels_map: HashMap<Label, usize>, offsets: HashMap<FragmentOrderId, u32>, stream: &mut dyn std::io::Write) -> Result<EmissionData, AssembleError> {
-    let start = fragment_at_index!(core_emitter, 0) as *const Fragment;
-    let end = fragment_end!(core_emitter);
+fn emit_fragments(asm: &X86_64Assembler, labels_map: HashMap<Label, usize>, offsets: HashMap<FragmentOrderId, u32>, stream: &mut dyn std::io::Write) -> Result<EmissionData, AssembleError> {
+    let start = fragment_at_index!(asm, 0) as *const Fragment;
+    let end = fragment_end!(asm);
 
     let mut emitted_bytes = 0;
     let mut current = start;
     while current < end {
         let current_fragment_ref = unsafe { &*current };
-        emitted_bytes += encode_fragment(core_emitter, current_fragment_ref, &labels_map, &offsets, stream)?;
+        emitted_bytes += encode_fragment(asm, current_fragment_ref, &labels_map, &offsets, stream)?;
         current = unsafe { current_fragment_ref.next() };
     }
 
-    let mut public_labels = HashMap::with_capacity(core_emitter.public_labels.len());
-    for item in &core_emitter.public_labels {
+    let mut public_labels = HashMap::with_capacity(asm.public_labels.len());
+    for item in &asm.public_labels {
         let position = labels_map.get(item).unwrap();
         public_labels.insert(item.clone(), *position);
     }
@@ -198,8 +198,8 @@ fn emit_fragments(core_emitter: &X86_64Assembler, labels_map: HashMap<Label, usi
     Ok(emission_data)
 }
 
-fn encode_fragment<'a>(core_emitter: &X86_64Assembler, fragment: &'a Fragment, labels_map: &HashMap<Label, usize>, offsets: &HashMap<FragmentOrderId, u32>, stream: &mut dyn std::io::Write) -> Result<usize, AssembleError> {
-    let start = fragment_at_index!(core_emitter, 0) as *const Fragment;
+fn encode_fragment<'a>(asm: &X86_64Assembler, fragment: &'a Fragment, labels_map: &HashMap<Label, usize>, offsets: &HashMap<FragmentOrderId, u32>, stream: &mut dyn std::io::Write) -> Result<usize, AssembleError> {
+    let start = fragment_at_index!(asm, 0) as *const Fragment;
     let get_id = |fragment: *const Fragment| -> FragmentOrderId {
         let u8_fragment = fragment.cast::<u8>();
         let u8_start = start.cast::<u8>();
@@ -231,7 +231,7 @@ fn encode_fragment<'a>(core_emitter: &X86_64Assembler, fragment: &'a Fragment, l
             match variant {
                 RelaxationVariant::Short => {
                     let diff = diff - const_sizes::SHORT_JUMP as isize;
-                    debug_assert!(diff >= i8::MIN as isize && diff <= i8::MAX as isize, "Short relaxable jump is too far.");
+                    debug_assert!(diff >= i8::MIN as isize && diff <= i8::MAX as isize, "Short relaxable jump is too far. Got: {}", diff);
                     let imm8 = enc_models::Immediate8::from_i8(diff as i8);
                     let encoded = enc::jmp::encode_jmp_imm8(imm8);
                     stream.write_all(encoded.as_slice())?;
@@ -239,7 +239,7 @@ fn encode_fragment<'a>(core_emitter: &X86_64Assembler, fragment: &'a Fragment, l
                 },
                 RelaxationVariant::Long => {
                     let diff = diff - const_sizes::LONG_JUMP as isize;
-                    debug_assert!(diff >= i32::MIN as isize && diff <= i32::MAX as isize, "Long relaxable jump is too far.");
+                    debug_assert!(diff >= i32::MIN as isize && diff <= i32::MAX as isize, "Long relaxable jump is too far. Got: {}", diff);
                     let imm32 = enc_models::Immediate32::from_i32(diff as i32);
                     let encoded = enc::jmp::encode_jmp_imm32(imm32);
                     stream.write_all(encoded.as_slice())?;

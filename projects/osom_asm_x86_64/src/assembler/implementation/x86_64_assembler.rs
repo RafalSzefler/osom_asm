@@ -61,7 +61,7 @@ impl X86_64Assembler {
             },
             _ => {
                 let new_fragment = Fragment::Bytes { data_length: 0, capacity: FRAGMENT_SIZE };
-                self.push_new_fragment(new_fragment);
+                self._push_new_fragment(new_fragment);
 
                 // Reload fragment.
                 let Fragment::Bytes { data_length, capacity } = fragment_at_index_mut!(self, self.last_fragment_offset) else {
@@ -90,13 +90,13 @@ impl X86_64Assembler {
         }
     }
 
-    pub(super) fn push_new_fragment(&mut self, fragment: Fragment) {
+    pub(super) fn _push_new_fragment(&mut self, fragment: Fragment) {
         let current_fragment = fragment_at_index!(self, self.last_fragment_offset);
         let padding = match current_fragment {
             Fragment::Bytes { data_length, capacity} => *capacity - *data_length - FRAGMENT_SIZE,
             _ => 0
         };
-        debug_assert!(padding < FRAGMENT_ALIGNMENT, "Padding is too large, expected at most {} bytes, got {}", FRAGMENT_ALIGNMENT, padding);
+        debug_assert!(padding <= FRAGMENT_ALIGNMENT, "Padding is too large, expected at most {} bytes, got {}", FRAGMENT_ALIGNMENT, padding);
         if padding > 0 {
             let buffer = [0; FRAGMENT_ALIGNMENT as usize];
             let slice = &buffer[..padding as usize];
@@ -108,11 +108,11 @@ impl X86_64Assembler {
     }
 
     #[inline(always)]
-    pub(super) const fn relaxation_variant(&self) -> RelaxationVariant {
+    pub(super) const fn _relaxation_variant(&self) -> RelaxationVariant {
         if self.with_relaxation { RelaxationVariant::Short } else { RelaxationVariant::Long }
     }
 
-    pub(super) fn insert_label(&mut self, label: Label) -> Result<(), EmitError> {
+    pub(super) fn _insert_label(&mut self, label: Label) -> Result<(), EmitError> {
         if self.label_offsets.contains_key(&label) {
             return Err(EmitError::LabelAlreadyDefined(label));
         }
