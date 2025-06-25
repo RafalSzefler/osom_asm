@@ -1,4 +1,6 @@
 #![cfg(target_arch = "x86_64")]
+#![allow(dead_code)]
+
 use std::io::Write;
 
 pub struct RegionStream {
@@ -19,6 +21,10 @@ impl RegionStream {
             allocated_space: base,
             length: 0,
         }
+    }
+
+    pub fn as_slice(&self) -> &[u8] {
+        &as_slice(&self.allocated_space)[0..self.length]
     }
 
     #[cfg(target_arch = "x86_64")]
@@ -63,11 +69,3 @@ fn as_slice(alloc: &region::Allocation) -> &[u8] {
 fn as_mut_slice(alloc: &mut region::Allocation) -> &mut [u8] {
     unsafe { std::slice::from_raw_parts_mut(alloc.as_mut_ptr(), alloc.len()) }
 }
-
-macro_rules! as_sysv_fn {
-    ($stream: expr) => {
-        unsafe { std::mem::transmute::<*const u8, extern "sysv64" fn() -> i64>($stream.as_ptr()) }
-    };
-}
-
-pub(crate) use as_sysv_fn;

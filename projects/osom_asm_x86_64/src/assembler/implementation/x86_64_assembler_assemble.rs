@@ -29,7 +29,7 @@ impl X86_64Assembler {
         let mut offsets = calculate_initial_offsets(&self)?;
         relax_instructions_and_update_offsets(&mut self, &mut offsets)?;
         let labels_map = calculate_labels_map(&self, &offsets)?;
-        patch_label_references(&mut self, &labels_map)?;
+        patch_addresses(&mut self, &labels_map, &offsets)?;
         emit_fragments(&self, &labels_map, &offsets, stream)
     }
 }
@@ -184,8 +184,46 @@ fn calculate_labels_map(
     Ok(result)
 }
 
-fn patch_label_references(asm: &mut X86_64Assembler, labels_map: &HashMap<Label, usize>) -> Result<(), AssembleError> {
-    // TODO
+fn patch_addresses(
+    asm: &mut X86_64Assembler,
+    labels_map: &HashMap<Label, usize>,
+    offsets: &HashMap<FragmentOrderId, u32>,
+) -> Result<(), AssembleError> {
+    unsafe {
+        for (label, patchable_addresses) in &asm.patchable_addresses {
+            let final_label_position = *labels_map.get(label).unwrap() as isize;
+            for patchable_address in patchable_addresses.as_slice() {
+                let patchable_fragment_id = patchable_address.instruction_position.fragment_id;
+                let patchable_fragment_index = patchable_fragment_id.index();
+                let patchable_fragment = fragment_at_index!(asm, patchable_fragment_index);
+                debug_assert!(
+                    matches!(patchable_fragment, Fragment::Bytes { .. }),
+                    "Patchable fragment is not a bytes fragment. Got: {patchable_fragment:?}"
+                );
+                let patchable_fragment_data_offset = size_of::<Fragment>();
+                let patchable_imm32_offset = patchable_fragment_index as usize
+                    + patchable_fragment_data_offset
+                    + patchable_address.instruction_position.in_fragment_offset as usize
+                    + patchable_address.imm32_offset as usize;
+
+                let patchable_imm32 = asm.fragments.as_mut_ptr().add(patchable_imm32_offset);
+
+                let final_fragment_offset = *offsets.get(&patchable_fragment_id).unwrap() as isize;
+                let final_end_of_instruction = final_fragment_offset
+                    + patchable_address.instruction_length as isize
+                    + patchable_address.instruction_position.in_fragment_offset as isize;
+                let distance = final_label_position - final_end_of_instruction;
+                debug_assert!(
+                    distance >= i32::MIN as isize && distance <= i32::MAX as isize,
+                    "Patchable distance is too far. Got: {distance}"
+                );
+                let distance = distance as i32;
+                let imm32 = enc_models::Immediate32::from_i32(distance).encode();
+                patchable_imm32.copy_from_nonoverlapping(imm32.as_ptr(), imm32.len());
+            }
+        }
+    }
+
     Ok(())
 }
 

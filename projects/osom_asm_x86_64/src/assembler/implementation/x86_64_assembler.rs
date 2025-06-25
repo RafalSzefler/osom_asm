@@ -14,16 +14,24 @@ use super::macros::{fragment_at_index, fragment_at_index_mut};
 
 #[derive(Debug, Clone)]
 #[must_use]
-pub(super) struct LabelOffset {
+pub(super) struct FragmentRelativePosition {
     pub fragment_id: FragmentOrderId,
     pub in_fragment_offset: u32,
+}
+
+#[derive(Debug, Clone)]
+#[must_use]
+pub(super) struct PatchableImm32Instruction {
+    pub instruction_position: FragmentRelativePosition,
+    pub instruction_length: u8,
+    pub imm32_offset: u8,
 }
 
 #[derive(Clone)]
 #[must_use]
 pub struct X86_64Assembler {
-    pub(super) label_offsets: HashMap<Label, LabelOffset>,
-    pub(super) patchable_binaries_addresses: HashMap<Label, InlineVec<LabelOffset, 4>>,
+    pub(super) label_offsets: HashMap<Label, FragmentRelativePosition>,
+    pub(super) patchable_addresses: HashMap<Label, InlineVec<PatchableImm32Instruction, 5>>,
     pub(super) public_labels: Vec<Label>,
     pub(super) fragments: Vec<u8>,
     pub(super) last_fragment_offset: u32,
@@ -46,7 +54,7 @@ impl X86_64Assembler {
 
         Self {
             label_offsets: HashMap::with_capacity(16),
-            patchable_binaries_addresses: HashMap::with_capacity(16),
+            patchable_addresses: HashMap::with_capacity(16),
             public_labels: Vec::with_capacity(4),
             fragments: fragments,
             last_fragment_offset: 0,
@@ -81,7 +89,7 @@ impl X86_64Assembler {
         self.fragments.extend_from_slice(bytes);
     }
 
-    pub(super) fn current_label_offset(&self) -> LabelOffset {
+    pub(super) fn _current_position(&self) -> FragmentRelativePosition {
         let current_fragment = fragment_at_index!(self, self.last_fragment_offset);
         let offset = match current_fragment {
             Fragment::Bytes { data_length, .. } => *data_length,
@@ -90,7 +98,7 @@ impl X86_64Assembler {
 
         let fragment_order_id = FragmentOrderId::from_index(self.last_fragment_offset);
 
-        LabelOffset {
+        FragmentRelativePosition {
             fragment_id: fragment_order_id,
             in_fragment_offset: offset,
         }
@@ -130,9 +138,17 @@ impl X86_64Assembler {
         if self.label_offsets.contains_key(&label) {
             return Err(EmitError::LabelAlreadyDefined(label));
         }
-        let label_offset = self.current_label_offset();
+        let label_offset = self._current_position();
         self.label_offsets.insert(label, label_offset);
         Ok(())
+    }
+
+    #[inline(always)]
+    pub(super) fn _push_patchable_instruction(&mut self, label: Label, patch_info: PatchableImm32Instruction) {
+        self.patchable_addresses
+            .entry(label)
+            .or_insert_with(InlineVec::new)
+            .push(patch_info);
     }
 }
 

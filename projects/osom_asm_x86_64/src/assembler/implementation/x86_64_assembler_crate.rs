@@ -3,6 +3,7 @@ use osom_encoders_x86_64::encoders as enc;
 use osom_encoders_x86_64::models as enc_models;
 
 use super::fragment::Fragment;
+use crate::assembler::implementation::PatchableImm32Instruction;
 use crate::{
     assembler::EmitError,
     models::{Immediate, Instruction, Size},
@@ -53,7 +54,8 @@ impl X86_64Assembler {
                 }
 
                 // Remaining instructions are not relaxable. But we still need to track
-                // labels.
+                // labels, since some instructions may utilize them, e.g. those that
+                // use memory operands.
                 Instruction::Ret => self._emit_encoded_instruction(enc::ret::encode_ret()),
                 Instruction::Nop { length } => {
                     let value = length.get();
@@ -115,9 +117,68 @@ impl X86_64Assembler {
                     Ok(())
                 }
                 Instruction::Mov_MemImm { dst, src } => todo!(),
-                Instruction::Mov_RegReg { dst, src } => todo!(),
+                Instruction::Mov_RegReg { dst, src } => {
+                    let size = src.size();
+                    if dst.size() != size {
+                        return Err(EmitError::OperandSizeMismatch);
+                    }
+
+                    match size {
+                        Size::Bit8 => {
+                            self._emit_encoded_instruction(enc::mov::encode_mov_reg8_rm8(
+                                dst.as_enc_gpr(),
+                                src.as_enc_mem(),
+                            ))?;
+                        }
+                        Size::Bit16 => {
+                            self._emit_encoded_instruction(enc::mov::encode_mov_reg16_rm16(
+                                dst.as_enc_gpr(),
+                                src.as_enc_mem(),
+                            ))?;
+                        }
+                        Size::Bit32 => {
+                            self._emit_encoded_instruction(enc::mov::encode_mov_reg32_rm32(
+                                dst.as_enc_gpr(),
+                                src.as_enc_mem(),
+                            ))?;
+                        }
+                        Size::Bit64 => {
+                            self._emit_encoded_instruction(enc::mov::encode_mov_reg64_rm64(
+                                dst.as_enc_gpr(),
+                                src.as_enc_mem(),
+                            ))?;
+                        }
+                    }
+                    Ok(())
+                }
                 Instruction::Mov_MemReg { dst, src } => todo!(),
-                Instruction::Mov_RegMem { dst, src } => todo!(),
+                Instruction::Mov_RegMem { dst, src } => {
+                    let mem = src.as_enc_mem();
+                    let mem = enc_models::GPROrMemory::Memory { memory: mem };
+
+                    let instr = match dst.size() {
+                        Size::Bit8 => enc::mov::encode_mov_reg8_rm8(dst.as_enc_gpr(), mem),
+                        Size::Bit16 => enc::mov::encode_mov_reg16_rm16(dst.as_enc_gpr(), mem),
+                        Size::Bit32 => enc::mov::encode_mov_reg32_rm32(dst.as_enc_gpr(), mem),
+                        Size::Bit64 => enc::mov::encode_mov_reg64_rm64(dst.as_enc_gpr(), mem),
+                    };
+
+                    if let Some(label) = src.get_label() {
+                        let position = self._current_position();
+                        let instr_len = instr.as_slice().len() as u8;
+                        debug_assert!(instr_len >= 4, "Instruction length is too short");
+                        let patchable_instruction = PatchableImm32Instruction {
+                            instruction_position: position,
+                            instruction_length: instr_len,
+                            imm32_offset: instr_len - 4,
+                        };
+                        self._push_patchable_instruction(*label, patchable_instruction);
+                    }
+
+                    self._emit_encoded_instruction(instr)?;
+
+                    Ok(())
+                }
                 Instruction::Add_RegImm { dst, src } => todo!(),
                 Instruction::Add_MemImm { dst, src } => todo!(),
                 Instruction::Add_RegReg { dst, src } => todo!(),

@@ -101,6 +101,14 @@ impl Memory {
         }
     }
 
+    #[inline(always)]
+    pub(crate) fn get_label(&self) -> Option<&Label> {
+        match &self.value {
+            MemoryImpl::Label { label } => Some(label),
+            _ => None,
+        }
+    }
+
     pub(crate) fn as_enc_mem(&self) -> enc_models::Memory {
         const fn imm_to_offset(offset: Immediate) -> enc_models::Offset {
             let val = offset.value();
@@ -137,8 +145,7 @@ impl Memory {
                 offset: imm_to_offset(*offset),
             },
             MemoryImpl::Label { label: _ } => {
-                // We ignore the label. We emit the code with the offset 0,
-                // and the correct label offset will be patched later.
+                // We set offset to None. It will be patched later.
                 enc_models::Memory::RelativeToRIP {
                     offset: enc_models::Offset::None,
                 }
