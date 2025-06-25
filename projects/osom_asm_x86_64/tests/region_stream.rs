@@ -1,3 +1,4 @@
+#![cfg(target_arch = "x86_64")]
 use std::io::Write;
 
 pub struct RegionStream {
@@ -63,12 +64,10 @@ fn as_mut_slice(alloc: &mut region::Allocation) -> &mut [u8] {
     unsafe { std::slice::from_raw_parts_mut(alloc.as_mut_ptr(), alloc.len()) }
 }
 
-#[cfg(target_arch = "x86_64")]
 macro_rules! as_sysv_fn {
     ($stream: expr) => {
         unsafe { std::mem::transmute::<*const u8, extern "sysv64" fn() -> i64>($stream.as_ptr()) }
     };
 }
 
-#[cfg(target_arch = "x86_64")]
 pub(crate) use as_sysv_fn;
