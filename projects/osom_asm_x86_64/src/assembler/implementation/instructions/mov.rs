@@ -5,6 +5,8 @@ use crate::assembler::implementation::{PatchableImm32Instruction, instructions::
 use crate::assembler::{EmitError, X86_64Assembler};
 use crate::models::{GPR, Immediate, Immediate64, Memory, Size};
 
+use super::helpers;
+
 pub fn emit_mov_reg_imm64(asm: &mut X86_64Assembler, dst: GPR, src: Immediate64) -> Result<(), EmitError> {
     unsafe {
         let src_value = src.value();
@@ -94,17 +96,7 @@ pub fn emit_mov_reg_mem(asm: &mut X86_64Assembler, dst: GPR, src: &Memory) -> Re
             Size::Bit64 => enc::mov::encode_mov_reg64_rm64(dst.as_enc_gpr(), mem),
         };
 
-        if let Some(label) = src.get_label() {
-            let position = asm._current_position();
-            let instr_len = instr.as_slice().len() as u8;
-            debug_assert!(instr_len >= 4, "Instruction length is too short");
-            let patchable_instruction = PatchableImm32Instruction {
-                instruction_position: position,
-                instruction_length: instr_len,
-                imm32_offset: instr_len - 4,
-            };
-            asm._push_patchable_instruction(*label, patchable_instruction);
-        }
+        helpers::update_patchable_info(asm, src, &instr);
 
         asm._emit_encoded_instruction(instr)?;
     }
