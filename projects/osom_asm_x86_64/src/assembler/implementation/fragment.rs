@@ -50,6 +50,10 @@ pub mod const_sizes {
     };
 
     const _CHECK: () = const {
+        // The reason we do this checks is because perhaps in the future
+        // we will overwrite the existing buffer with real instructions.
+        // So we want to be sure we have space for that. This is not
+        // implemented at the moment.
         assert!(SHORT_JUMP as usize <= size_of::<super::Fragment>());
         assert!(LONG_JUMP as usize <= size_of::<super::Fragment>());
         assert!(SHORT_COND_JUMP as usize <= size_of::<super::Fragment>());
