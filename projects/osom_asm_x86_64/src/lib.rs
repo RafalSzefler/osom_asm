@@ -9,7 +9,8 @@
     clippy::len_without_is_empty,
     clippy::should_implement_trait,
     clippy::missing_errors_doc,
-    clippy::missing_panics_doc
+    clippy::missing_panics_doc,
+    clippy::cast_possible_truncation
 )]
 pub mod assembler;
 pub mod models;

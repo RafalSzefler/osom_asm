@@ -24,11 +24,14 @@ impl EmissionData {
 
     /// Releases the internal data of the [`EmissionData`] into a free struct.
     #[inline(always)]
-    pub const fn deconstruct(self) -> DeconstructedEmissionData{
+    pub const fn deconstruct(self) -> DeconstructedEmissionData {
         let emitted_bytes = self.emitted_bytes;
         let labels_to_position_map = unsafe { std::ptr::read(&self.labels_to_position_map) };
         forget(self);
-        DeconstructedEmissionData { emitted_bytes, labels_to_position_map }
+        DeconstructedEmissionData {
+            emitted_bytes,
+            labels_to_position_map,
+        }
     }
 
     /// Returns a map of public labels to their positions in the emitted code,

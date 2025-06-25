@@ -1,54 +1,25 @@
-#![allow(clippy::used_underscore_items)]
 use osom_encoders_x86_64::encoders as enc;
 use osom_encoders_x86_64::models as enc_models;
 
-use super::fragment::Fragment;
-use crate::{
-    assembler::EmitError,
-    models::{Immediate, Instruction, Size},
-};
+use crate::assembler::EmitError;
+use crate::models::{Immediate, Instruction, Size};
 
-use super::X86_64Assembler;
+use super::{X86_64Assembler, fragment::Fragment};
 
 impl X86_64Assembler {
-    #[allow(clippy::needless_pass_by_value, clippy::unnecessary_wraps)]
-    #[inline(always)]
-    pub(crate) fn _emit_encoded_instruction(
-        &mut self,
-        encoded_instruction: enc_models::EncodedX86_64Instruction,
-    ) -> Result<(), EmitError> {
-        self._write_bytes_internal(encoded_instruction.as_slice());
-        Ok(())
-    }
-
-    #[allow(clippy::unnecessary_wraps)]
-    #[inline(always)]
-    pub(crate) fn _emit_bytes(&mut self, bytes: &[u8]) -> Result<(), EmitError> {
-        self._write_bytes_internal(bytes);
-        Ok(())
-    }
-
-    #[allow(clippy::too_many_lines)]
     pub(crate) fn _emit_instruction(&mut self, instruction: &Instruction) -> Result<(), EmitError> {
         unsafe {
             match instruction {
                 // The only two special instructions that have different encoding
                 // depending on the context. Handled through fragmentation.
                 Instruction::Jump_Label { dst } => {
-                    let new_fragment = Fragment::Relaxable_Jump {
-                        variant: self._relaxation_variant(),
-                        label: *dst,
-                    };
-                    self._push_new_fragment(new_fragment);
+                    let new_fragment = Fragment::Relaxable_Jump { variant: self.relaxation_variant(), label: dst.clone() };
+                    self.push_new_fragment(new_fragment);
                     Ok(())
                 }
                 Instruction::CondJump_Label { condition, dst } => {
-                    let new_fragment = Fragment::Relaxable_CondJump {
-                        variant: self._relaxation_variant(),
-                        condition: *condition,
-                        label: *dst,
-                    };
-                    self._push_new_fragment(new_fragment);
+                    let new_fragment = Fragment::Relaxable_CondJump { variant: self.relaxation_variant(), condition: condition.clone(), label: dst.clone() };
+                    self.push_new_fragment(new_fragment);
                     Ok(())
                 }
 
@@ -79,11 +50,11 @@ impl X86_64Assembler {
                     }
 
                     let imm = Immediate::from(src_value as i32);
-                    return self._emit_instruction(&Instruction::Mov_RegImm { dst: *dst, src: imm });
+                    return self._emit_instruction(&Instruction::Mov_RegImm { dst: dst.clone(), src: imm });
                 }
                 Instruction::Mov_RegImm { dst, src } => {
                     if src.value() == 0 {
-                        return self._emit_instruction(&Instruction::Xor_RegReg { dst: *dst, src: *dst });
+                        return self._emit_instruction(&Instruction::Xor_RegReg { dst: dst.clone(), src: dst.clone() });
                     }
 
                     let dst_size = dst.size();
@@ -97,23 +68,23 @@ impl X86_64Assembler {
                         Size::Bit8 => {
                             let imm8 = enc_models::Immediate8::from_i8(src_value as i8);
                             self._emit_encoded_instruction(enc::mov::encode_mov_reg8_imm8(dst.as_enc_gpr(), imm8))?;
-                        }
+                        },
                         Size::Bit16 => {
                             let imm16 = enc_models::Immediate16::from_i16(src_value as i16);
                             self._emit_encoded_instruction(enc::mov::encode_mov_reg16_imm16(dst.as_enc_gpr(), imm16))?;
-                        }
+                        },
                         Size::Bit32 => {
                             let imm32 = enc_models::Immediate32::from_i32(src_value);
                             self._emit_encoded_instruction(enc::mov::encode_mov_reg32_imm32(dst.as_enc_gpr(), imm32))?;
-                        }
+                        },
                         Size::Bit64 => {
                             let imm32 = enc_models::Immediate32::from_i32(src_value);
                             self._emit_encoded_instruction(enc::mov::encode_mov_rm64_imm32(dst.as_enc_mem(), imm32))?;
-                        }
-                    }
+                        },
+                    };
 
                     Ok(())
-                }
+                },
                 Instruction::Mov_MemImm { dst, src } => todo!(),
                 Instruction::Mov_RegReg { dst, src } => todo!(),
                 Instruction::Mov_MemReg { dst, src } => todo!(),
@@ -143,29 +114,29 @@ impl X86_64Assembler {
                     match src_size {
                         Size::Bit8 => {
                             self._emit_encoded_instruction(enc::xor::encode_xor_reg8_rm8(dst, src))?;
-                        }
+                        },
                         Size::Bit16 => {
                             self._emit_encoded_instruction(enc::xor::encode_xor_reg16_rm16(dst, src))?;
-                        }
+                        },
                         Size::Bit32 => {
                             self._emit_encoded_instruction(enc::xor::encode_xor_reg32_rm32(dst, src))?;
-                        }
+                        },
                         Size::Bit64 => {
                             self._emit_encoded_instruction(enc::xor::encode_xor_reg64_rm64(dst, src))?;
                         }
-                    }
+                    };
 
                     Ok(())
                 }
                 Instruction::Xor_MemReg { dst, src } => todo!(),
                 Instruction::Xor_RegMem { dst, src } => todo!(),
                 Instruction::SetPrivate_Label { label } => {
-                    self._insert_label(*label)?;
+                    self.insert_label(label.clone())?;
                     Ok(())
                 }
                 Instruction::SetPublic_Label { label } => {
-                    self._insert_label(*label)?;
-                    self.public_labels.push(*label);
+                    self.insert_label(label.clone())?;
+                    self.public_labels.push(label.clone()); 
                     Ok(())
                 }
                 Instruction::Jump_Reg { dst } => todo!(),

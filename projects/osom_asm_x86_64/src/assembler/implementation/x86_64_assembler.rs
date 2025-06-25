@@ -1,22 +1,26 @@
+#![allow(clippy::cast_ptr_alignment, clippy::used_underscore_items)]
+
 use std::collections::HashMap;
 
 use osom_asm_common::InlineVec;
 use osom_encoders_x86_64::models::EncodedX86_64Instruction;
 
-use crate::assembler::implementation::fragment::RelaxationVariant;
 use crate::assembler::EmitError;
+use crate::assembler::implementation::fragment::RelaxationVariant;
 use crate::models::Label;
 
 use super::fragment::{Fragment, FragmentOrderId};
 use super::macros::{fragment_at_index, fragment_at_index_mut};
 
 #[derive(Debug, Clone)]
+#[must_use]
 pub(super) struct LabelOffset {
     pub fragment_id: FragmentOrderId,
     pub in_fragment_offset: u32,
 }
 
 #[derive(Clone)]
+#[must_use]
 pub struct X86_64Assembler {
     pub(super) label_offsets: HashMap<Label, LabelOffset>,
     pub(super) patchable_binaries_addresses: HashMap<Label, InlineVec<LabelOffset, 4>>,
@@ -34,7 +38,10 @@ impl X86_64Assembler {
     #[inline(always)]
     pub fn new(with_relaxation: bool) -> Self {
         let mut fragments = Vec::<u8>::with_capacity(1 << 12);
-        let initial_fragment = Fragment::Bytes { data_length: 0, capacity: FRAGMENT_SIZE };
+        let initial_fragment = Fragment::Bytes {
+            data_length: 0,
+            capacity: FRAGMENT_SIZE,
+        };
         fragments.extend_from_slice(initial_fragment.slice_of_header());
 
         Self {
@@ -48,38 +55,37 @@ impl X86_64Assembler {
         }
     }
 
-    pub(super) fn _write_bytes_internal(&mut self, bytes: &[u8]) -> Result<(), EmitError> {
+    pub(super) fn _write_bytes_internal(&mut self, bytes: &[u8]) {
         if bytes.is_empty() {
-            return Ok(());
+            return;
         }
         let bytes_len = bytes.len() as u32;
         let current_fragment = fragment_at_index_mut!(self, self.last_fragment_offset);
-        match current_fragment {
-            Fragment::Bytes { data_length, capacity } => {
-                *data_length += bytes_len;
-                *capacity = (((*data_length + FRAGMENT_SIZE) / FRAGMENT_ALIGNMENT) + 1) * FRAGMENT_ALIGNMENT;
-            },
-            _ => {
-                let new_fragment = Fragment::Bytes { data_length: 0, capacity: FRAGMENT_SIZE };
-                self._push_new_fragment(new_fragment);
-
-                // Reload fragment.
-                let Fragment::Bytes { data_length, capacity } = fragment_at_index_mut!(self, self.last_fragment_offset) else {
-                    panic!("New fragment is not a bytes fragment.");
-                };
-                *data_length += bytes_len;
-                *capacity = (((*data_length + FRAGMENT_SIZE) / FRAGMENT_ALIGNMENT) + 1) * FRAGMENT_ALIGNMENT;
-            }
+        if let Fragment::Bytes { data_length, capacity } = current_fragment {
+            *data_length += bytes_len;
+            *capacity = (((*data_length + FRAGMENT_SIZE) / FRAGMENT_ALIGNMENT) + 1) * FRAGMENT_ALIGNMENT;
+        } else {
+            let new_fragment = Fragment::Bytes {
+                data_length: 0,
+                capacity: FRAGMENT_SIZE,
+            };
+            self._push_new_fragment(new_fragment);
+            let Fragment::Bytes { data_length, capacity } = fragment_at_index_mut!(self, self.last_fragment_offset)
+            else {
+                panic!("New fragment is not a bytes fragment.");
+            };
+            *data_length += bytes_len;
+            *capacity = (((*data_length + FRAGMENT_SIZE) / FRAGMENT_ALIGNMENT) + 1) * FRAGMENT_ALIGNMENT;
         }
+
         self.fragments.extend_from_slice(bytes);
-        Ok(())
     }
 
     pub(super) fn current_label_offset(&self) -> LabelOffset {
         let current_fragment = fragment_at_index!(self, self.last_fragment_offset);
         let offset = match current_fragment {
             Fragment::Bytes { data_length, .. } => *data_length,
-            _ => 0
+            _ => 0,
         };
 
         let fragment_order_id = FragmentOrderId::from_index(self.last_fragment_offset);
@@ -90,13 +96,17 @@ impl X86_64Assembler {
         }
     }
 
+    #[allow(clippy::needless_pass_by_value)]
     pub(super) fn _push_new_fragment(&mut self, fragment: Fragment) {
         let current_fragment = fragment_at_index!(self, self.last_fragment_offset);
         let padding = match current_fragment {
-            Fragment::Bytes { data_length, capacity} => *capacity - *data_length - FRAGMENT_SIZE,
-            _ => 0
+            Fragment::Bytes { data_length, capacity } => *capacity - *data_length - FRAGMENT_SIZE,
+            _ => 0,
         };
-        debug_assert!(padding <= FRAGMENT_ALIGNMENT, "Padding is too large, expected at most {} bytes, got {}", FRAGMENT_ALIGNMENT, padding);
+        debug_assert!(
+            padding <= FRAGMENT_ALIGNMENT,
+            "Padding is too large, expected at most {FRAGMENT_ALIGNMENT} bytes, got {padding}"
+        );
         if padding > 0 {
             let buffer = [0; FRAGMENT_ALIGNMENT as usize];
             let slice = &buffer[..padding as usize];
@@ -109,7 +119,11 @@ impl X86_64Assembler {
 
     #[inline(always)]
     pub(super) const fn _relaxation_variant(&self) -> RelaxationVariant {
-        if self.with_relaxation { RelaxationVariant::Short } else { RelaxationVariant::Long }
+        if self.with_relaxation {
+            RelaxationVariant::Short
+        } else {
+            RelaxationVariant::Long
+        }
     }
 
     pub(super) fn _insert_label(&mut self, label: Label) -> Result<(), EmitError> {

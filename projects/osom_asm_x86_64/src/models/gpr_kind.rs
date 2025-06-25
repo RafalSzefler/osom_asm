@@ -44,7 +44,7 @@ impl GPRKind {
     }
 
     #[inline(always)]
-    pub(crate) fn as_enc_gpr_kind(&self) -> enc_models::GPRKind {
+    pub(crate) fn as_enc_gpr_kind(self) -> enc_models::GPRKind {
         self.value
     }
 }

@@ -16,7 +16,7 @@ categories = ["compilers"]
 
 [workspace.dependencies]
 osom_encoders_x86_64 = "0.1.1"
-region = "3"
 
 # tests
 rstest = "0.25"
+region = "3"

@@ -28,7 +28,7 @@ impl Size {
     }
 
     #[inline(always)]
-    pub(crate) fn as_enc_size(&self) -> enc_models::Size {
+    pub(crate) fn as_enc_size(self) -> enc_models::Size {
         self.value
     }
 }

@@ -22,4 +22,5 @@ osom_encoders_x86_64 = { workspace = true }
 
 [dev-dependencies]
 rstest = { workspace = true }
+region = { workspace = true }
 osom_asm_test_helpers = { path = "../osom_asm_test_helpers" }

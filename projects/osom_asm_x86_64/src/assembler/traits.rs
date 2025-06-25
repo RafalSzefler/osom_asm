@@ -1,4 +1,4 @@
-
+#![allow(clippy::used_underscore_items)]
 
 use osom_encoders_x86_64::models::EncodedX86_64Instruction;
 

@@ -11,14 +11,10 @@ const fn byte_size_of_immediate(imm: &Immediate) -> i32 {
 
 const fn immediate_offset(instruction: &Instruction) -> i32 {
     match instruction {
-        Instruction::Mov_MemImm { dst: _, src } =>
-            byte_size_of_immediate(src),
-        Instruction::Add_MemImm { dst: _, src } =>
-            byte_size_of_immediate(src),
-        Instruction::Sub_MemImm { dst: _, src } =>
-            byte_size_of_immediate(src),
-        Instruction::Xor_MemImm { dst: _, src } =>
-            byte_size_of_immediate(src),
+        Instruction::Mov_MemImm { dst: _, src } => byte_size_of_immediate(src),
+        Instruction::Add_MemImm { dst: _, src } => byte_size_of_immediate(src),
+        Instruction::Sub_MemImm { dst: _, src } => byte_size_of_immediate(src),
+        Instruction::Xor_MemImm { dst: _, src } => byte_size_of_immediate(src),
         _ => 0,
     }
 }

@@ -1,6 +1,6 @@
-mod macros;
 mod fragment;
 mod instruction_label_offset;
+mod macros;
 
 mod x86_64_assembler;
 mod x86_64_assembler_assemble;

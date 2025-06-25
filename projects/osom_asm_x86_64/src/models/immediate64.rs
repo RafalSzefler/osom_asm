@@ -20,7 +20,7 @@ impl Immediate64 {
         if value >= i8::MIN as i64 || value <= i8::MAX as i64 {
             return Size::Bit8;
         }
-        if value >= i16::MIN as i64 || value <= i16::MAX as i64 { 
+        if value >= i16::MIN as i64 || value <= i16::MAX as i64 {
             return Size::Bit16;
         }
         if value >= i32::MIN as i64 || value <= i32::MAX as i64 {
@@ -28,7 +28,6 @@ impl Immediate64 {
         }
         Size::Bit64
     }
-
 
     #[inline(always)]
     #[must_use]

@@ -5,15 +5,15 @@ pub struct TmpSlice<'a> {
     pub data: &'a [u8],
 }
 
-impl<'a> fmt::Debug for TmpSlice<'a> {
+impl fmt::Debug for TmpSlice<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "[")?;
         let mut iter = self.data.iter();
         if let Some(item) = iter.next() {
-            write!(f, "{:#04X}", item)?;
+            write!(f, "{item:#04X}")?;
         }
         for item in iter {
-            write!(f, ", {:#04X}", item)?;
+            write!(f, ", {item:#04X}")?;
         }
         write!(f, "]")?;
         Ok(())

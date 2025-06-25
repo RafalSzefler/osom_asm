@@ -21,7 +21,7 @@ impl Scale {
     }
 
     #[inline(always)]
-    pub(crate) fn as_enc_scale(&self) -> enc_models::Scale {
+    pub(crate) fn as_enc_scale(self) -> enc_models::Scale {
         self.value
     }
 }

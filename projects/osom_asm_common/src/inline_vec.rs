@@ -1,7 +1,7 @@
 #![allow(
     clippy::needless_borrow,
     clippy::uninit_assumed_init,
-    clippy::cast_possible_truncation,
+    clippy::cast_possible_truncation
 )]
 
 use std::mem::{ManuallyDrop, MaybeUninit, forget};
