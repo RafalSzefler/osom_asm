@@ -11,6 +11,7 @@ union InlineVecUnion<T: Clone, const N: usize> {
     heap_data: ManuallyDrop<Box<[T]>>,
 }
 
+/// Similar to `vec`, except `N` elements get inlined into the struct.
 #[must_use]
 pub struct InlineVec<T: Clone, const N: usize> {
     data: InlineVecUnion<T, N>,
@@ -23,6 +24,7 @@ impl<T: Clone, const N: usize> InlineVec<T, N> {
         assert!(N > 0, "N must be greater than 0.");
     };
 
+    /// Creates a new empty [`InlineVec`].
     #[inline]
     pub fn new() -> Self {
         let uninit = unsafe { MaybeUninit::<[T; N]>::uninit().assume_init() };
@@ -35,14 +37,25 @@ impl<T: Clone, const N: usize> InlineVec<T, N> {
         }
     }
 
+    /// Returns the number of elements in the [`InlineVec`].
+    #[inline]
     pub fn len(&self) -> usize {
         self.len as usize
     }
 
+    /// Returns the capacity of the [`InlineVec`]. Note that
+    /// this is always at least `N`.
+    #[inline]
     pub fn capacity(&self) -> usize {
         self.capacity as usize
     }
 
+    /// Pushes a value to the end of the [`InlineVec`].
+    ///
+    /// Note that the [`InlineVec`] data will be moved to the heap
+    /// only when length exceeds `N`. It won't come back from the
+    /// heap though.
+    #[inline]
     pub fn push(&mut self, value: T) {
         unsafe {
             if self.len < N as u32 {
@@ -84,6 +97,8 @@ impl<T: Clone, const N: usize> InlineVec<T, N> {
         }
     }
 
+    /// Represents current [`InlineVec`] as a slice.
+    #[inline]
     pub fn as_slice(&self) -> &[T] {
         let len = self.len();
         unsafe {

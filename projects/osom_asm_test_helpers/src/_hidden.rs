@@ -53,3 +53,9 @@ impl<const N: usize> TmpSlicable for &[u8; N] {
         TmpSlice { data: *self }
     }
 }
+
+/// Calls passed function. The whole point is that the internal
+/// function can use `unsafe` blocks, and then we get rid of
+/// those annoying "unused `unsafe` block" warnings.
+#[inline(always)]
+pub fn call<T: FnOnce() -> R, R>(f: T) -> R { f() }

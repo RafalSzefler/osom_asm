@@ -1,3 +1,4 @@
+//! A collection of test helpers for the osom asm projects.
 #![cfg_attr(not(debug_assertions), deny(warnings))]
 #![warn(clippy::all, clippy::pedantic)]
 #![allow(

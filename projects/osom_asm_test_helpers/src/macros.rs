@@ -39,13 +39,35 @@ macro_rules! _fn_signature {
 #[macro_export]
 macro_rules! as_abi_fn {
     ($abi: literal, $pointerable:expr, $($tokens:tt)*) => {
-        unsafe {
-            let _ptr = ($pointerable).as_ptr() as *const u8;
-            type _FnSignature = $crate::_fn_signature!($abi, $($tokens)*);
-            std::mem::transmute::<*const u8, _FnSignature>(_ptr)
-        }
+        $crate::as_abi_fn_with_offset!($abi, $pointerable, 0, $($tokens)*)
     };
     ($abi: literal, $pointerable:expr) => {
-        $crate::as_abi_fn!($abi, $pointerable, fn() -> i64)
+        $crate::as_abi_fn_with_offset!($abi, $pointerable, 0, fn() -> i64)
+    };
+}
+
+/// Transforms pointerable into a function pointer.
+///
+/// # Arguments
+///
+/// * `abi` - The ABI of the function, e.g. `"sysv64"`.
+/// * `pointerable` - The pointerable to transform into a function pointer. This
+///   is any object that implements `pub fn as_ptr(&self) -> *const u8` function.
+/// * `offset` - the offset in the instructions `u8` buffer to jump to, relative
+///   to the beginning of the buffer.
+/// * `tokens` - optional function signature, e.g. `fn(i32, bool) -> u8`.
+#[macro_export]
+macro_rules! as_abi_fn_with_offset {
+    ($abi: literal, $pointerable:expr, $offset:expr, $($tokens:tt)*) => {
+        $crate::_hidden::call(|| {
+            unsafe {
+                let _ptr = ($pointerable).as_ptr().add(($offset) as usize) as *const u8;
+                type _FnSignature = $crate::_fn_signature!($abi, $($tokens)*);
+                std::mem::transmute::<*const u8, _FnSignature>(_ptr)
+            }
+        })
+    };
+    ($abi: literal, $pointerable:expr, $offset:expr) => {
+        $crate::as_abi_fn_with_offset!($abi, $pointerable, $offset, fn() -> i64)
     };
 }

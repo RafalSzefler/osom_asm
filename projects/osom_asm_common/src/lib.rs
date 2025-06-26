@@ -1,3 +1,4 @@
+//! A collection of common utilities for the osom asm projects.
 #![deny(warnings)]
 #![warn(clippy::all, clippy::pedantic)]
 #![allow(

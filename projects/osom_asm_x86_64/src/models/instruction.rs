@@ -4,15 +4,26 @@ use core::num::NonZero;
 
 use super::{Condition, GPR, Immediate, Label, Memory};
 
+/// Represents custom assembly language instructions.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[must_use]
 #[repr(u16)]
 pub enum Instruction {
-    /// `ret`
-    Ret = 1, // We start from 1 because we want Option<Instruction> to be optimized.
-
     /// `nop` extended to specified `length`
-    Nop { length: NonZero<u32> },
+    Nop { length: NonZero<u32> } = 1, // We start from 1 because we want Option<Instruction> to be optimized.
+
+    /// Pseudoinstruction: sets label at current position.
+    /// "Private" means that the label won't be visible
+    /// outside the compiled code.
+    SetPrivate_Label { label: Label },
+
+    /// Pseudoinstruction: sets label at current position.
+    /// "Public" means that the label will be visible
+    /// and reachable from outside the compiled code.
+    SetPublic_Label { label: Label },
+
+    /// `ret`
+    Ret,
 
     /// `mov reg, imm64`
     ///
@@ -79,16 +90,6 @@ pub enum Instruction {
 
     /// `xor reg, [mem]`
     Xor_RegMem { dst: GPR, src: Memory },
-
-    /// Pseudoinstruction: sets label at current position.
-    /// "Private" means that the label won't be visible
-    /// outside the compiled code.
-    SetPrivate_Label { label: Label },
-
-    /// Pseudoinstruction: sets label at current position.
-    /// "Public" means that the label will be visible
-    /// and reachable from outside the compiled code.
-    SetPublic_Label { label: Label },
 
     /// Pseudoinstruction: jumps to label.
     Jump_Label { dst: Label },
