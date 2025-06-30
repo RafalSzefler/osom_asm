@@ -17,7 +17,8 @@ impl Immediate64 {
     #[inline]
     pub const fn real_size(self) -> Size {
         // While this implementation looks weird, it actually results
-        // in Rust compiler optimizing this into cmov instructions.
+        // in Rust compiler optimizing this into cmov instructions
+        // under x64 architecture.
         // Instead of branches, if classical fast return is used.
         let value = self.value;
         let mut result = Size::Bit64;
