@@ -13,6 +13,7 @@ use super::X86_64Assembler;
 
 mod const_encodings {
     pub const RET: &[u8] = super::enc::ret::encode_ret().as_slice();
+    pub const CPUID: &[u8] = super::enc::singleton::encode_cpuid().as_slice();
 }
 
 impl X86_64Assembler {
@@ -48,7 +49,7 @@ impl X86_64Assembler {
             }
 
             // The only two special instructions that have different encoding
-            // depending on the context. Handled through fragmentation.
+            // depending on the context. Handled through relaxation algorithm.
             Instruction::Jump_Label { dst } => {
                 let new_fragment = Fragment::Relaxable_Jump {
                     variant: self._relaxation_variant(),
@@ -71,6 +72,7 @@ impl X86_64Assembler {
             // labels, since some instructions may utilize them, e.g. those that
             // use memory operands.
             Instruction::Ret => self._emit_bytes(const_encodings::RET),
+            Instruction::Cpuid => self._emit_bytes(const_encodings::CPUID),
             Instruction::Nop { length } => instructions::emit_nop_with_length(self, *length),
             Instruction::Mov_RegImm64 { dst, src } => instructions::emit_mov_reg_imm64(self, *dst, *src),
             Instruction::Mov_RegImm { dst, src } => instructions::emit_mov_reg_imm(self, *dst, *src),

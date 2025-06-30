@@ -25,6 +25,9 @@ pub enum Instruction {
     /// `ret`
     Ret,
 
+    /// `cpuid`
+    Cpuid,
+
     /// `mov reg, imm64`
     ///
     /// # Notes
