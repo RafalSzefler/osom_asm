@@ -26,7 +26,7 @@ pub(crate) enum MemoryImpl {
     },
 }
 
-/// Represents a general `x86_64` memory operand.
+/// Represents a general `X86_64` memory operand.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[must_use]
 #[repr(transparent)]

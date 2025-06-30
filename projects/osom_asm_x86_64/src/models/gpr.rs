@@ -13,7 +13,7 @@ pub enum NewGPRError {
     IndexOutOfRange,
 }
 
-/// Represents an `x86_64` general purpose register.
+/// Represents an `X86_64` general purpose register.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(transparent)]
 #[must_use]
