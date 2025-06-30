@@ -24,7 +24,7 @@ use super::macros::{fragment_at_index, fragment_at_index_mut};
 use super::{X86_64Assembler, fragment::Fragment};
 
 impl X86_64Assembler {
-    pub fn assemble(mut self, stream: &mut dyn std::io::Write) -> Result<EmissionData, AssembleError> {
+    pub fn assemble(mut self, stream: &mut impl std::io::Write) -> Result<EmissionData, AssembleError> {
         let mut offsets = calculate_initial_offsets(&self)?;
         relax_instructions_and_update_offsets(&mut self, &mut offsets)?;
         let labels_map = calculate_labels_map(&self, &offsets)?;
@@ -230,7 +230,7 @@ fn emit_fragments(
     asm: &X86_64Assembler,
     labels_map: &HashMap<Label, usize>,
     offsets: &HashMap<FragmentOrderId, u32>,
-    stream: &mut dyn std::io::Write,
+    stream: &mut impl std::io::Write,
 ) -> Result<EmissionData, AssembleError> {
     let start = fragment_at_index!(asm, 0) as *const Fragment;
     let end = fragment_end!(asm);
@@ -258,7 +258,7 @@ fn encode_fragment(
     fragment: &Fragment,
     labels_map: &HashMap<Label, usize>,
     offsets: &HashMap<FragmentOrderId, u32>,
-    stream: &mut dyn std::io::Write,
+    stream: &mut impl std::io::Write,
 ) -> Result<usize, AssembleError> {
     let start = fragment_at_index!(asm, 0) as *const Fragment;
     let get_id = |fragment: *const Fragment| -> FragmentOrderId {

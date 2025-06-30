@@ -1,3 +1,5 @@
+/// Represents `X86_64` conditions usable with certain
+/// instructions, e.g. conditional jumps and/or cmov.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[must_use]
 #[repr(u8)]

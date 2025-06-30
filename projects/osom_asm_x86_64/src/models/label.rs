@@ -1,5 +1,7 @@
 use core::sync::atomic::{AtomicU32, Ordering};
 
+/// Represents a place in `X86_64` code that other instructions
+/// can refer to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[must_use]
 #[repr(transparent)]
@@ -26,6 +28,14 @@ fn get_next_label_value() -> u32 {
 }
 
 impl Label {
+    /// Creates a new label. Note that each call produces a new
+    /// unique label, that won't be equal to any other label.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the number of labels overflows. At the moment
+    /// the limit is set to `u32::MAX` labels. Globally, during
+    /// the execution of the program.
     #[inline(always)]
     pub fn new() -> Self {
         Self {

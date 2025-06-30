@@ -34,11 +34,15 @@ pub struct Memory {
     value: MemoryImpl,
 }
 
+/// Errors returned during memory creation.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[repr(u8)]
 #[must_use]
 pub enum NewMemoryError {
+    /// The base or index register is not 64-bit.
     GPRNotBit64,
+
+    /// `RSP` register is not allowed as an index register.
     RSPNotAllowedAsIndex,
 }
 

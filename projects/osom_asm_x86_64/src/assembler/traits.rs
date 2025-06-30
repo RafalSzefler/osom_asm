@@ -4,6 +4,9 @@ use crate::{assembler::X86_64Assembler, models::Instruction};
 
 use super::EmitError;
 
+/// The internal trait that represents everything that is emittable.
+/// This includes [`Instruction`], arrays of bytes, and some internal
+/// structures.
 pub(crate) trait X86_64Emitable {
     fn emit_to(self, assembler: &mut X86_64Assembler) -> Result<(), EmitError>;
 }

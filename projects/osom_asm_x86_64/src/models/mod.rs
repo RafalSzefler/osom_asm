@@ -1,3 +1,4 @@
+//! The module that contains models for creating `X86_64` instructions.
 mod size;
 pub use size::*;
 

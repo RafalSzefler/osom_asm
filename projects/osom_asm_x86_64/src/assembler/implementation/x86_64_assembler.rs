@@ -27,6 +27,14 @@ pub(super) struct PatchableImm32Instruction {
     pub imm32_offset: u8,
 }
 
+/// The main `X86_64` assembler.
+///
+/// This assembler can be created in two modes: with or without relaxation.
+/// Relaxation is an optmization technique that allows the assembler to emit
+/// shorter encoding for certain instructions. This algorithm however is not
+/// free, and in fact of quadratic complexity. Thus the option is switchable.
+///
+/// Note that relaxation is enabled by default.
 #[derive(Clone)]
 #[must_use]
 pub struct X86_64Assembler {
@@ -43,6 +51,11 @@ const FRAGMENT_SIZE: u32 = size_of::<Fragment>() as u32;
 const FRAGMENT_ALIGNMENT: u32 = align_of::<Fragment>() as u32;
 
 impl X86_64Assembler {
+    /// Creates a new `X86_64` assembler.
+    ///
+    /// # Arguments
+    ///
+    /// * `with_relaxation` - whether to enable relaxation optimization or not.
     #[inline(always)]
     pub fn new(with_relaxation: bool) -> Self {
         let mut fragments = Vec::<u8>::with_capacity(1 << 12);

@@ -2,12 +2,17 @@ use std::{collections::HashMap, mem::forget};
 
 use crate::models::Label;
 
+/// The classical Rust struct that represents the summary of the assembled code.
+/// It allows the data to be mutated and moved around.
 #[must_use]
 pub struct DeconstructedEmissionData {
     pub emitted_bytes: usize,
     pub labels_to_position_map: HashMap<Label, usize>,
 }
 
+/// The summary of the assembled code. This struct is immutable.
+/// It can be decomposed into classical Rust struct through the
+/// [`EmissionData::deconstruct`] method.
 #[derive(Debug)]
 #[must_use]
 pub struct EmissionData {

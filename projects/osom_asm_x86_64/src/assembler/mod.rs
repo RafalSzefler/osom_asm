@@ -1,3 +1,4 @@
+//! The main module that contains and implements the assembler.
 #![allow(unused_imports)]
 
 mod emission_data;
