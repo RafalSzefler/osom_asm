@@ -18,15 +18,14 @@ impl Immediate {
 
     #[inline]
     pub const fn real_size(self) -> Size {
-        #[allow(clippy::cast_possible_wrap)]
         let value = self.value;
-        if value >= i8::MIN as i32 || value <= i8::MAX as i32 {
+        if value >= i8::MIN as i32 && value <= i8::MAX as i32 {
             return Size::Bit8;
         }
-        if value >= i16::MIN as i32 || value <= i16::MAX as i32 {
+        if value >= i16::MIN as i32 && value <= i16::MAX as i32 {
             return Size::Bit16;
         }
-        return Size::Bit32;
+        Size::Bit32
     }
 
     #[inline(always)]
