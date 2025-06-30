@@ -19,6 +19,7 @@ crate-type = ["lib"]
 [dependencies]
 osom_tools_runtime = { workspace = true }
 osom_encoders_x86_64 = { workspace = true }
+paste = { workspace = true }
 
 [dev-dependencies]
 rstest = { workspace = true }

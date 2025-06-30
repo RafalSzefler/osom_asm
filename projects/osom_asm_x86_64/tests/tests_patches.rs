@@ -5,7 +5,7 @@ use osom_asm_x86_64::models::{GPR, Immediate, Instruction, Label, Memory};
 
 #[test]
 fn test_patchable_mov() {
-    let expected = &[0x48, 0x33, 0xC0, 0x48, 0x8B, 0x15, 0xF6, 0xFF, 0xFF, 0xFF, 0xC3];
+    let expected = &[0x48, 0x31, 0xC0, 0x48, 0x8B, 0x15, 0xF6, 0xFF, 0xFF, 0xFF, 0xC3];
     let mut assembler = X86_64Assembler::new(true);
     let label = Label::new();
     assembler.emit(Instruction::SetPrivate_Label { label }).unwrap();

@@ -26,10 +26,6 @@ pub fn emit_mov_reg_imm64(asm: &mut X86_64Assembler, dst: GPR, src: Immediate64)
 
 pub fn emit_mov_reg_imm(asm: &mut X86_64Assembler, dst: GPR, src: Immediate) -> Result<(), EmitError> {
     unsafe {
-        if dst.size() >= Size::Bit32 && src.value() == 0 {
-            return emit_xor_reg_reg(asm, dst, dst);
-        }
-
         let dst_size = dst.size();
         let src_size = src.real_size();
         if dst_size < src_size {
@@ -59,46 +55,7 @@ pub fn emit_mov_reg_imm(asm: &mut X86_64Assembler, dst: GPR, src: Immediate) -> 
     Ok(())
 }
 
-pub fn emit_mov_reg_reg(asm: &mut X86_64Assembler, dst: GPR, src: GPR) -> Result<(), EmitError> {
-    unsafe {
-        let size = src.size();
-        if dst.size() != size {
-            return Err(EmitError::OperandSizeMismatch);
-        }
-
-        match size {
-            Size::Bit8 => {
-                asm._emit_encoded_instruction(enc::mov::encode_mov_reg8_rm8(dst.as_enc_gpr(), src.as_enc_mem()))?;
-            }
-            Size::Bit16 => {
-                asm._emit_encoded_instruction(enc::mov::encode_mov_reg16_rm16(dst.as_enc_gpr(), src.as_enc_mem()))?;
-            }
-            Size::Bit32 => {
-                asm._emit_encoded_instruction(enc::mov::encode_mov_reg32_rm32(dst.as_enc_gpr(), src.as_enc_mem()))?;
-            }
-            Size::Bit64 => {
-                asm._emit_encoded_instruction(enc::mov::encode_mov_reg64_rm64(dst.as_enc_gpr(), src.as_enc_mem()))?;
-            }
-        }
-    }
-    Ok(())
-}
-
-pub fn emit_mov_reg_mem(asm: &mut X86_64Assembler, dst: GPR, src: &Memory) -> Result<(), EmitError> {
-    unsafe {
-        let mem = src.as_enc_mem();
-        let mem = enc_models::GPROrMemory::Memory { memory: mem };
-
-        let instr = match dst.size() {
-            Size::Bit8 => enc::mov::encode_mov_reg8_rm8(dst.as_enc_gpr(), mem),
-            Size::Bit16 => enc::mov::encode_mov_reg16_rm16(dst.as_enc_gpr(), mem),
-            Size::Bit32 => enc::mov::encode_mov_reg32_rm32(dst.as_enc_gpr(), mem),
-            Size::Bit64 => enc::mov::encode_mov_reg64_rm64(dst.as_enc_gpr(), mem),
-        };
-
-        helpers::update_patchable_info(asm, src, &instr);
-
-        asm._emit_encoded_instruction(instr)?;
-    }
-    Ok(())
-}
+super::macros::generate_fn_emit_reg_reg!(mov);
+super::macros::generate_fn_emit_reg_mem!(mov);
+super::macros::generate_fn_emit_mem_reg!(mov);
+super::macros::generate_fn_emit_mem_imm!(mov);
