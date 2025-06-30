@@ -8,3 +8,6 @@ pub use misc::*;
 
 mod xor;
 pub use xor::*;
+
+mod cmp;
+pub use cmp::*;

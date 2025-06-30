@@ -4,8 +4,7 @@
     clippy::cast_possible_wrap,
     clippy::cast_sign_loss,
     clippy::cast_ptr_alignment,
-    clippy::unnecessary_wraps,
-    clippy::used_underscore_items
+    clippy::unnecessary_wraps
 )]
 
 use std::collections::HashMap;

@@ -1,8 +1,8 @@
-use osom_tools_dev::macros::assert_eq_hex;
 use osom_asm_x86_64::{
     assembler::X86_64Assembler,
     models::{Condition, GPR, Immediate, Instruction, Label},
 };
+use osom_tools_dev::macros::assert_eq_hex;
 use rstest::rstest;
 
 #[test]

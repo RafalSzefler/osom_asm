@@ -46,6 +46,21 @@ pub enum Instruction {
     /// `mov reg, [mem]`
     Mov_RegMem { dst: GPR, src: Memory },
 
+    /// `cmp reg, imm`
+    Cmp_RegImm { dst: GPR, src: Immediate },
+
+    /// `cmp reg, reg`
+    Cmp_RegReg { dst: GPR, src: GPR },
+
+    /// `cmp [mem], imm`
+    Cmp_MemImm { dst: Memory, src: Immediate },
+
+    /// `cmp reg, [mem]`
+    Cmp_RegMem { dst: GPR, src: Memory },
+
+    /// `cmp [mem], reg`
+    Cmp_MemReg { dst: Memory, src: GPR },
+
     /// `add reg, imm`
     Add_RegImm { dst: GPR, src: Immediate },
 

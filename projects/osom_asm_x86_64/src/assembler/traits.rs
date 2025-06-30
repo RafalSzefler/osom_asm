@@ -1,5 +1,3 @@
-#![allow(clippy::used_underscore_items)]
-
 use osom_encoders_x86_64::models::EncodedX86_64Instruction;
 
 use crate::{assembler::X86_64Assembler, models::Instruction};

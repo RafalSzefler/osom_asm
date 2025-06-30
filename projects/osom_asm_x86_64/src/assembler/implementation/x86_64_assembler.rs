@@ -1,9 +1,9 @@
-#![allow(clippy::cast_ptr_alignment, clippy::used_underscore_items)]
+#![allow(clippy::cast_ptr_alignment)]
 
 use std::collections::HashMap;
 
-use osom_tools_runtime::InlineVec;
 use osom_encoders_x86_64::models::EncodedX86_64Instruction;
+use osom_tools_runtime::InlineVec;
 
 use crate::assembler::EmitError;
 use crate::assembler::implementation::fragment::RelaxationVariant;
@@ -145,10 +145,7 @@ impl X86_64Assembler {
 
     #[inline(always)]
     pub(super) fn _push_patchable_instruction(&mut self, label: Label, patch_info: PatchableImm32Instruction) {
-        self.patchable_addresses
-            .entry(label)
-            .or_insert_with(InlineVec::new)
-            .push(patch_info);
+        self.patchable_addresses.entry(label).or_default().push(patch_info);
     }
 }
 

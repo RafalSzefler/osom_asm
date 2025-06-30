@@ -1,4 +1,3 @@
-#![allow(clippy::used_underscore_items)]
 use osom_encoders_x86_64::encoders as enc;
 use osom_encoders_x86_64::models as enc_models;
 
@@ -79,6 +78,11 @@ impl X86_64Assembler {
             Instruction::Mov_RegReg { dst, src } => instructions::emit_mov_reg_reg(self, *dst, *src),
             Instruction::Mov_MemReg { dst, src } => todo!(),
             Instruction::Mov_RegMem { dst, src } => instructions::emit_mov_reg_mem(self, *dst, src),
+            Instruction::Cmp_RegImm { dst, src } => instructions::emit_cmp_reg_imm(self, *dst, *src),
+            Instruction::Cmp_RegReg { dst, src } => instructions::emit_cmp_reg_reg(self, *dst, *src),
+            Instruction::Cmp_MemImm { dst, src } => instructions::emit_cmp_mem_imm(self, dst, *src),
+            Instruction::Cmp_RegMem { dst, src } => instructions::emit_cmp_reg_mem(self, *dst, src),
+            Instruction::Cmp_MemReg { dst, src } => instructions::emit_cmp_mem_reg(self, dst, *src),
             Instruction::Add_RegImm { dst, src } => todo!(),
             Instruction::Add_MemImm { dst, src } => todo!(),
             Instruction::Add_RegReg { dst, src } => todo!(),

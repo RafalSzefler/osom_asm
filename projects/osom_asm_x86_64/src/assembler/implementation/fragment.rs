@@ -80,18 +80,19 @@ pub mod const_sizes {
 }
 
 impl Fragment {
+    #[allow(clippy::cast_ptr_alignment)]
     pub unsafe fn next(&self) -> *mut Fragment {
         let offset = match self {
             Fragment::Bytes { capacity, .. } => *capacity as usize,
             _ => size_of::<Fragment>(),
         };
-        let raw_ptr = (self as *const Fragment).cast_mut().cast::<u8>();
+        let raw_ptr = std::ptr::from_ref::<Fragment>(self).cast_mut().cast::<u8>();
         unsafe { raw_ptr.add(offset) }.cast::<Fragment>()
     }
 
     #[inline(always)]
     pub fn slice_of_header(&self) -> &[u8] {
-        let ptr = (self as *const Fragment).cast::<u8>();
+        let ptr = std::ptr::from_ref::<Fragment>(self).cast::<u8>();
         let len = size_of::<Fragment>();
         unsafe { std::slice::from_raw_parts(ptr, len) }
     }

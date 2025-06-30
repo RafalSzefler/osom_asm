@@ -1,7 +1,7 @@
 #![cfg(target_arch = "x86_64")]
 use osom_asm_x86_64::{
     assembler::X86_64Assembler,
-    models::{GPR, Immediate, Instruction, Label, Memory},
+    models::{Condition, GPR, Immediate, Instruction, Label, Memory},
 };
 
 use osom_tools_dev::macros::convert_to_fn;
@@ -105,4 +105,52 @@ fn test_pass_and_return(#[case] value: i32) {
 
     let fn_ptr = convert_to_fn!("sysv64", stream, fn(i32) -> i32);
     assert_eq!(unsafe { fn_ptr(value) }, value);
+}
+
+#[test]
+fn test_cmp_reg_imm() {
+    let mut assembler = X86_64Assembler::new(true);
+    let label = Label::new();
+    assembler
+        .emit(Instruction::Xor_RegReg {
+            dst: GPR::RAX,
+            src: GPR::RAX,
+        })
+        .unwrap();
+    assembler
+        .emit(Instruction::Cmp_RegImm {
+            dst: GPR::RDI,
+            src: Immediate::new(0),
+        })
+        .unwrap();
+    assembler
+        .emit(Instruction::CondJump_Label {
+            condition: Condition::GreaterOrEqual,
+            dst: label,
+        })
+        .unwrap();
+    assembler
+        .emit(Instruction::Mov_RegImm {
+            dst: GPR::RAX,
+            src: Immediate::new(1),
+        })
+        .unwrap();
+    assembler.emit(Instruction::SetPrivate_Label { label }).unwrap();
+    assembler.emit(Instruction::Ret).unwrap();
+
+    let mut stream = RegionStream::new();
+    assembler.assemble(&mut stream).unwrap();
+
+    let fn_ptr = convert_to_fn!("sysv64", stream, fn(i64) -> i64);
+
+    assert_eq!(unsafe { fn_ptr(i64::MIN) }, 1);
+    assert_eq!(unsafe { fn_ptr(i64::MAX) }, 0);
+
+    for i in -100..0 {
+        assert_eq!(unsafe { fn_ptr(i) }, 1);
+    }
+
+    for i in 0..100 {
+        assert_eq!(unsafe { fn_ptr(i) }, 0);
+    }
 }
