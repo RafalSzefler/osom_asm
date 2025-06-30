@@ -18,14 +18,18 @@ impl Immediate {
 
     #[inline]
     pub const fn real_size(self) -> Size {
+        // While this implementation looks weird, it actually results
+        // optimizing this into cmov instructions, instead of branches,
+        // if classical fast return is used.
         let value = self.value;
-        if value >= i8::MIN as i32 && value <= i8::MAX as i32 {
-            return Size::Bit8;
-        }
+        let mut result = Size::Bit32;
         if value >= i16::MIN as i32 && value <= i16::MAX as i32 {
-            return Size::Bit16;
+            result = Size::Bit16;
         }
-        Size::Bit32
+        if value >= i8::MIN as i32 && value <= i8::MAX as i32 {
+            result = Size::Bit8;
+        }
+        result
     }
 
     #[inline(always)]
