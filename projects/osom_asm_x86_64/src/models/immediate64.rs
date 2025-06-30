@@ -17,8 +17,8 @@ impl Immediate64 {
     #[inline]
     pub const fn real_size(self) -> Size {
         // While this implementation looks weird, it actually results
-        // optimizing this into cmov instructions, instead of branches,
-        // if classical fast return is used.
+        // in Rust compiler optimizing this into cmov instructions.
+        // Instead of branches, if classical fast return is used.
         let value = self.value;
         let mut result = Size::Bit64;
         if value >= i32::MIN as i64 && value <= i32::MAX as i64 {
