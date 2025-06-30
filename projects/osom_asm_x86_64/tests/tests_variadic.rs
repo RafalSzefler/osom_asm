@@ -34,7 +34,7 @@ fn test_variadic_jump_with_nop(#[case] with_relaxation: bool, #[case] nop_length
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut final_code = Vec::new();
-    assembler.assemble(&mut final_code).unwrap();
+    let _ = assembler.assemble(&mut final_code).unwrap();
     assert_eq_hex!(final_code, expected);
 }
 
@@ -63,7 +63,7 @@ fn test_variadic_jump_with_nop_backwards(
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut final_code = Vec::new();
-    assembler.assemble(&mut final_code).unwrap();
+    let _ = assembler.assemble(&mut final_code).unwrap();
     assert_eq_hex!(final_code, expected);
 }
 
@@ -93,7 +93,7 @@ fn test_variadic_cond_jump_with_nop(#[case] with_relaxation: bool, #[case] nop_l
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut final_code = Vec::new();
-    assembler.assemble(&mut final_code).unwrap();
+    let _ = assembler.assemble(&mut final_code).unwrap();
     assert_eq_hex!(final_code, expected);
 }
 
@@ -127,6 +127,6 @@ fn test_variadic_cond_jump_with_nop_backwards(
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut final_code = Vec::new();
-    assembler.assemble(&mut final_code).unwrap();
+    let _ = assembler.assemble(&mut final_code).unwrap();
     assert_eq_hex!(final_code, expected);
 }

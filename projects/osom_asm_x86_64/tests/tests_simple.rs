@@ -17,7 +17,7 @@ fn test_simple_mov() {
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut final_code = Vec::new();
-    assembler.assemble(&mut final_code).unwrap();
+    let _ = assembler.assemble(&mut final_code).unwrap();
     assert_eq_hex!(final_code, [0x48, 0x33, 0xC0, 0xC3]);
 }
 
@@ -38,7 +38,7 @@ fn test_jmp(#[case] with_relaxation: bool, #[case] expected: &[u8]) {
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut final_code = Vec::new();
-    assembler.assemble(&mut final_code).unwrap();
+    let _ = assembler.assemble(&mut final_code).unwrap();
     assert_eq_hex!(final_code, expected);
 }
 
@@ -59,7 +59,7 @@ fn test_jmp_forward(#[case] with_relaxation: bool, #[case] expected: &[u8]) {
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut final_code = Vec::new();
-    assembler.assemble(&mut final_code).unwrap();
+    let _ = assembler.assemble(&mut final_code).unwrap();
     assert_eq_hex!(final_code, expected);
 }
 
@@ -85,7 +85,7 @@ fn test_jmp_cond(#[case] with_relaxation: bool, #[case] expected: &[u8]) {
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut final_code = Vec::new();
-    assembler.assemble(&mut final_code).unwrap();
+    let _ = assembler.assemble(&mut final_code).unwrap();
     assert_eq_hex!(final_code, expected);
 }
 
@@ -111,6 +111,6 @@ fn test_jmp_cond_forward(#[case] with_relaxation: bool, #[case] expected: &[u8])
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut final_code = Vec::new();
-    assembler.assemble(&mut final_code).unwrap();
+    let _ = assembler.assemble(&mut final_code).unwrap();
     assert_eq_hex!(final_code, expected);
 }

@@ -25,7 +25,7 @@ fn test_simple_execution(#[case] with_relaxation: bool) {
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut stream = RegionStream::new();
-    assembler.assemble(&mut stream).unwrap();
+    let _ = assembler.assemble(&mut stream).unwrap();
     let fn_ptr = convert_to_fn!("sysv64", stream);
     assert_eq!(unsafe { fn_ptr() }, 0);
 }
@@ -53,7 +53,7 @@ fn test_with_jumps(#[case] with_relaxation: bool) {
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut stream = RegionStream::new();
-    assembler.assemble(&mut stream).unwrap();
+    let _ = assembler.assemble(&mut stream).unwrap();
     let fn_ptr = convert_to_fn!("sysv64", stream);
     assert_eq!(unsafe { fn_ptr() }, 1);
 }
@@ -79,7 +79,7 @@ fn test_patchable_load(#[case] value: i32) {
     assembler.emit(value_bytes).unwrap();
 
     let mut stream = RegionStream::new();
-    assembler.assemble(&mut stream).unwrap();
+    let _ = assembler.assemble(&mut stream).unwrap();
 
     let fn_ptr = convert_to_fn!("sysv64", stream, fn() -> i32);
     assert_eq!(unsafe { fn_ptr() }, value);
@@ -101,7 +101,7 @@ fn test_pass_and_return(#[case] value: i32) {
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut stream = RegionStream::new();
-    assembler.assemble(&mut stream).unwrap();
+    let _ = assembler.assemble(&mut stream).unwrap();
 
     let fn_ptr = convert_to_fn!("sysv64", stream, fn(i32) -> i32);
     assert_eq!(unsafe { fn_ptr(value) }, value);
@@ -139,7 +139,7 @@ fn test_cmp_reg_imm() {
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut stream = RegionStream::new();
-    assembler.assemble(&mut stream).unwrap();
+    let _ = assembler.assemble(&mut stream).unwrap();
 
     let fn_ptr = convert_to_fn!("sysv64", stream, fn(i64) -> i64);
 

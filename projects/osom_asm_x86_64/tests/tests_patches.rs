@@ -24,7 +24,7 @@ fn test_patchable_mov() {
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut final_code = Vec::new();
-    assembler.assemble(&mut final_code).unwrap();
+    let _ = assembler.assemble(&mut final_code).unwrap();
     assert_eq_hex!(final_code, expected);
 }
 
@@ -52,6 +52,6 @@ fn test_patchable_mov_forward() {
     assembler.emit([1, 2, 3]).unwrap();
 
     let mut final_code = Vec::new();
-    assembler.assemble(&mut final_code).unwrap();
+    let _ = assembler.assemble(&mut final_code).unwrap();
     assert_eq_hex!(final_code, expected);
 }
