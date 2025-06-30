@@ -14,31 +14,31 @@ macro_rules! generate_fn_emit_reg_imm {
                         asm._emit_encoded_instruction(enc::$name::[<encode_ $name _AL_imm8>](imm8))?;
                         return Ok(());
                     }
-            
+
                     if dst.eq(&GPR::AX) && src_real_size.le(&Size::Bit16) {
                         let imm16 = enc_models::Immediate16::from_i16(src_value as i16);
                         asm._emit_encoded_instruction(enc::$name::[<encode_ $name _AX_imm16>](imm16))?;
                         return Ok(());
                     }
-            
+
                     if dst.eq(&GPR::EAX) {
                         let imm32 = enc_models::Immediate32::from_i32(src_value);
                         asm._emit_encoded_instruction(enc::$name::[<encode_ $name _EAX_imm32>](imm32))?;
                         return Ok(());
                     }
-            
+
                     if dst.eq(&GPR::RAX) {
                         let imm64 = enc_models::Immediate32::from_i32(src_value);
                         asm._emit_encoded_instruction(enc::$name::[<encode_ $name _RAX_imm32>](imm64))?;
                         return Ok(());
                     }
-            
+
                     if dst.size() < src_real_size {
                         return Err(crate::assembler::EmitError::OperandSizeMismatch);
                     }
 
                     let dst_mem = dst.as_enc_mem();
-            
+
                     match dst.size() {
                         Size::Bit8 => {
                             let imm8 = enc_models::Immediate8::from_i8(src_value as i8);
@@ -80,7 +80,7 @@ macro_rules! generate_fn_emit_reg_reg {
                     }
                     let dst_enc = dst.as_enc_mem();
                     let src_enc = src.as_enc_gpr();
-            
+
                     match size {
                         Size::Bit8 => {
                             asm._emit_encoded_instruction(enc::$name::[<encode_ $name _rm8_reg8>](dst_enc, src_enc))?;
@@ -117,16 +117,16 @@ macro_rules! generate_fn_emit_reg_mem {
                     let mem = src.as_enc_mem();
                     let mem = enc_models::GPROrMemory::Memory { memory: mem };
                     let dst_enc = dst.as_enc_gpr();
-            
+
                     let instr = match dst.size() {
                         Size::Bit8 => enc::$name::[<encode_ $name _reg8_rm8>](dst_enc, mem),
                         Size::Bit16 => enc::$name::[<encode_ $name _reg16_rm16>](dst_enc, mem),
                         Size::Bit32 => enc::$name::[<encode_ $name _reg32_rm32>](dst_enc, mem),
                         Size::Bit64 => enc::$name::[<encode_ $name _reg64_rm64>](dst_enc, mem),
                     };
-            
+
                     helpers::update_patchable_info(asm, src, &instr);
-            
+
                     asm._emit_encoded_instruction(instr)?;
                 }
                 Ok(())
@@ -136,7 +136,6 @@ macro_rules! generate_fn_emit_reg_mem {
 }
 
 pub(crate) use generate_fn_emit_reg_mem;
-
 
 macro_rules! generate_fn_emit_mem_reg {
     ($name:ident) => {
@@ -151,16 +150,16 @@ macro_rules! generate_fn_emit_mem_reg {
                     let mem = dst.as_enc_mem();
                     let mem = enc_models::GPROrMemory::Memory { memory: mem };
                     let src_enc = src.as_enc_gpr();
-            
+
                     let instr = match src.size() {
                         Size::Bit8 => enc::$name::[<encode_ $name _rm8_reg8>](mem, src_enc),
                         Size::Bit16 => enc::$name::[<encode_ $name _rm16_reg16>](mem, src_enc),
                         Size::Bit32 => enc::$name::[<encode_ $name _rm32_reg32>](mem, src_enc),
                         Size::Bit64 => enc::$name::[<encode_ $name _rm64_reg64>](mem, src_enc),
                     };
-            
+
                     helpers::update_patchable_info(asm, dst, &instr);
-            
+
                     asm._emit_encoded_instruction(instr)?;
                 }
                 Ok(())
@@ -170,7 +169,6 @@ macro_rules! generate_fn_emit_mem_reg {
 }
 
 pub(crate) use generate_fn_emit_mem_reg;
-
 
 macro_rules! generate_fn_emit_mem_imm {
     ($name:ident) => {
@@ -184,7 +182,7 @@ macro_rules! generate_fn_emit_mem_imm {
                 unsafe {
                     let mem = dst.as_enc_mem();
                     let mem = enc_models::GPROrMemory::Memory { memory: mem };
-            
+
                     let instr = match src.real_size() {
                         Size::Bit8 => {
                             let imm8 = enc_models::Immediate8::from_i8(src.value() as i8);
@@ -203,7 +201,7 @@ macro_rules! generate_fn_emit_mem_imm {
                             enc::$name::[<encode_ $name _rm64_imm32>](mem, imm32)
                         }
                     };
-            
+
                     helpers::update_patchable_info_with_imm(asm, dst, &instr, src);
                     asm._emit_encoded_instruction(instr)?;
                 }
@@ -215,8 +213,6 @@ macro_rules! generate_fn_emit_mem_imm {
 
 pub(crate) use generate_fn_emit_mem_imm;
 
-
-
 macro_rules! generate_group1_fn {
     ($name:ident) => {
         crate::assembler::implementation::instructions::macros::generate_fn_emit_reg_imm!($name);
@@ -224,7 +220,7 @@ macro_rules! generate_group1_fn {
         crate::assembler::implementation::instructions::macros::generate_fn_emit_reg_mem!($name);
         crate::assembler::implementation::instructions::macros::generate_fn_emit_mem_reg!($name);
         crate::assembler::implementation::instructions::macros::generate_fn_emit_mem_imm!($name);
-    }
+    };
 }
 
 pub(crate) use generate_group1_fn;
