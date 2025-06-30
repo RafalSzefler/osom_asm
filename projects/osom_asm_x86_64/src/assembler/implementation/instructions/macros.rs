@@ -37,7 +37,7 @@ macro_rules! generate_fn_emit_reg_imm {
                         return Err(crate::assembler::EmitError::OperandSizeMismatch);
                     }
 
-                    let dst_mem = dst.as_enc_mem();
+                    let dst_mem = dst.as_enc_gpr_or_mem();
 
                     match dst.size() {
                         Size::Bit8 => {
@@ -78,7 +78,7 @@ macro_rules! generate_fn_emit_reg_reg {
                     if size != src.size() {
                         return Err(crate::assembler::EmitError::OperandSizeMismatch);
                     }
-                    let dst_enc = dst.as_enc_mem();
+                    let dst_enc = dst.as_enc_gpr_or_mem();
                     let src_enc = src.as_enc_gpr();
 
                     match size {
@@ -114,8 +114,7 @@ macro_rules! generate_fn_emit_reg_mem {
                 use crate::assembler::implementation::instructions::helpers;
 
                 unsafe {
-                    let mem = src.as_enc_mem();
-                    let mem = enc_models::GPROrMemory::Memory { memory: mem };
+                    let mem = src.as_enc_gpr_or_mem();
                     let dst_enc = dst.as_enc_gpr();
 
                     let instr = match dst.size() {
@@ -147,8 +146,7 @@ macro_rules! generate_fn_emit_mem_reg {
                 use crate::assembler::implementation::instructions::helpers;
 
                 unsafe {
-                    let mem = dst.as_enc_mem();
-                    let mem = enc_models::GPROrMemory::Memory { memory: mem };
+                    let mem = dst.as_enc_gpr_or_mem();
                     let src_enc = src.as_enc_gpr();
 
                     let instr = match src.size() {
@@ -180,8 +178,7 @@ macro_rules! generate_fn_emit_mem_imm {
                 use crate::assembler::implementation::instructions::helpers;
 
                 unsafe {
-                    let mem = dst.as_enc_mem();
-                    let mem = enc_models::GPROrMemory::Memory { memory: mem };
+                    let mem = dst.as_enc_gpr_or_mem();
 
                     let instr = match src.real_size() {
                         Size::Bit8 => {

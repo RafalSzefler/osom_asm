@@ -1,7 +1,7 @@
 #![cfg(target_arch = "x86_64")]
 use osom_asm_x86_64::{
     assembler::X86_64Assembler,
-    models::{Condition, GPR, Immediate, Instruction, Label, Memory},
+    models::{Condition, GPR, Immediate, Immediate64, Instruction, Label, Memory},
 };
 
 use osom_tools_dev::macros::convert_to_fn;
@@ -107,9 +107,11 @@ fn test_pass_and_return(#[case] value: i32) {
     assert_eq!(unsafe { fn_ptr(value) }, value);
 }
 
-#[test]
-fn test_cmp_reg_imm() {
-    let mut assembler = X86_64Assembler::new(true);
+#[rstest]
+#[case(false)]
+#[case(true)]
+fn test_cmp_reg_imm(#[case] with_relaxation: bool) {
+    let mut assembler = X86_64Assembler::new(with_relaxation);
     let label = Label::new();
     assembler
         .emit(Instruction::Xor_RegReg {
@@ -153,4 +155,144 @@ fn test_cmp_reg_imm() {
     for i in 0..100 {
         assert_eq!(unsafe { fn_ptr(i) }, 0);
     }
+}
+
+#[rstest]
+#[case(false)]
+#[case(true)]
+fn test_jmp_reg(#[case] with_relaxation: bool) {
+    let mut assembler = X86_64Assembler::new(with_relaxation);
+
+    const VALUE: i64 = -100;
+
+    let ptr: fn() -> i64 = || VALUE;
+    let ptr_int = ptr as i64;
+
+    assembler
+        .emit(Instruction::Mov_RegImm64 {
+            dst: GPR::R10,
+            src: Immediate64::new(ptr_int),
+        })
+        .unwrap();
+    assembler.emit(Instruction::Jump_Reg { dst: GPR::R10 }).unwrap();
+
+    let mut stream = RegionStream::new();
+    let _ = assembler.assemble(&mut stream).unwrap();
+    let fn_ptr = convert_to_fn!("sysv64", stream, fn() -> i64);
+    assert_eq!(unsafe { fn_ptr() }, VALUE);
+}
+
+#[rstest]
+#[case(false)]
+#[case(true)]
+fn test_jmp_mem(#[case] with_relaxation: bool) {
+    let mut assembler = X86_64Assembler::new(with_relaxation);
+
+    const VALUE: i64 = 1731;
+
+    let ptr: fn() -> i64 = || VALUE;
+    let ptr_int = ptr as i64;
+    let ptr_int_address = &ptr_int as *const i64;
+    let ptr_int_address_int = ptr_int_address as i64;
+
+    assembler
+        .emit(Instruction::Mov_RegImm64 {
+            dst: GPR::R10,
+            src: Immediate64::new(ptr_int_address_int),
+        })
+        .unwrap();
+    assembler
+        .emit(Instruction::Jump_Mem {
+            dst: Memory::based(GPR::R10, Immediate::ZERO).unwrap(),
+        })
+        .unwrap();
+
+    let mut stream = RegionStream::new();
+    let _ = assembler.assemble(&mut stream).unwrap();
+    let fn_ptr = convert_to_fn!("sysv64", stream, fn() -> i64);
+    assert_eq!(unsafe { fn_ptr() }, VALUE);
+}
+
+#[rstest]
+#[case(false)]
+#[case(true)]
+fn test_call_reg(#[case] with_relaxation: bool) {
+    let mut assembler = X86_64Assembler::new(with_relaxation);
+
+    const VALUE: i64 = 555;
+
+    let ptr: fn() -> i64 = || VALUE;
+    let ptr_int = ptr as i64;
+
+    assembler
+        .emit(Instruction::Mov_RegImm64 {
+            dst: GPR::R10,
+            src: Immediate64::new(ptr_int),
+        })
+        .unwrap();
+    assembler.emit(Instruction::Call_Reg { dst: GPR::R10 }).unwrap();
+    assembler.emit(Instruction::Ret).unwrap();
+
+    let mut stream = RegionStream::new();
+    let _ = assembler.assemble(&mut stream).unwrap();
+    let fn_ptr = convert_to_fn!("sysv64", stream, fn() -> i64);
+    assert_eq!(unsafe { fn_ptr() }, VALUE);
+}
+
+#[rstest]
+#[case(false)]
+#[case(true)]
+fn test_call_mem(#[case] with_relaxation: bool) {
+    let mut assembler = X86_64Assembler::new(with_relaxation);
+
+    const VALUE: i64 = 666;
+
+    let ptr: fn() -> i64 = || VALUE;
+    let ptr_int = ptr as i64;
+    let ptr_int_address = &ptr_int as *const i64;
+    let ptr_int_address_int = ptr_int_address as i64;
+
+    assembler
+        .emit(Instruction::Mov_RegImm64 {
+            dst: GPR::R10,
+            src: Immediate64::new(ptr_int_address_int),
+        })
+        .unwrap();
+    assembler
+        .emit(Instruction::Call_Mem {
+            dst: Memory::based(GPR::R10, Immediate::ZERO).unwrap(),
+        })
+        .unwrap();
+    assembler.emit(Instruction::Ret).unwrap();
+
+    let mut stream = RegionStream::new();
+    let _ = assembler.assemble(&mut stream).unwrap();
+    let fn_ptr = convert_to_fn!("sysv64", stream, fn() -> i64);
+    assert_eq!(unsafe { fn_ptr() }, VALUE);
+}
+
+#[rstest]
+#[case(false)]
+#[case(true)]
+fn test_call_label(#[case] with_relaxation: bool) {
+    let mut assembler = X86_64Assembler::new(with_relaxation);
+
+    let label = Label::new();
+
+    assembler.emit(Instruction::Call_Label { dst: label }).unwrap();
+    assembler.emit(Instruction::Ret).unwrap();
+    assembler.emit(Instruction::SetPrivate_Label { label }).unwrap();
+    assembler
+        .emit(Instruction::Mov_RegImm {
+            dst: GPR::RAX,
+            src: Immediate::new(-3),
+        })
+        .unwrap();
+    assembler.emit(Instruction::Ret).unwrap();
+
+    let mut stream = RegionStream::new();
+    let _ = assembler.assemble(&mut stream).unwrap();
+
+    let fn_ptr = convert_to_fn!("sysv64", stream, fn() -> i32);
+    assert_eq!(unsafe { fn_ptr() }, -3);
 }

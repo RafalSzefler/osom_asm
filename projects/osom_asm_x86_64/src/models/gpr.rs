@@ -131,7 +131,7 @@ impl GPR {
     }
 
     #[inline(always)]
-    pub(crate) fn as_enc_mem(self) -> enc_models::GPROrMemory {
+    pub(crate) fn as_enc_gpr_or_mem(self) -> enc_models::GPROrMemory {
         enc_models::GPROrMemory::GPR { gpr: self.value }
     }
 }

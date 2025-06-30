@@ -152,4 +152,11 @@ impl Memory {
             }
         }
     }
+
+    #[inline(always)]
+    pub(crate) fn as_enc_gpr_or_mem(&self) -> enc_models::GPROrMemory {
+        enc_models::GPROrMemory::Memory {
+            memory: self.as_enc_mem(),
+        }
+    }
 }

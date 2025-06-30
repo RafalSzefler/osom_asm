@@ -42,11 +42,6 @@ impl GPRKind {
     pub const fn equals(self, other: Self) -> bool {
         self.value.equals(other.value)
     }
-
-    #[inline(always)]
-    pub(crate) fn as_enc_gpr_kind(self) -> enc_models::GPRKind {
-        self.value
-    }
 }
 
 impl From<enc_models::GPRKind> for GPRKind {

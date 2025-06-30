@@ -9,6 +9,8 @@ pub struct Immediate {
 }
 
 impl Immediate {
+    pub const ZERO: Self = Self::new(0);
+
     #[inline(always)]
     pub const fn new(value: i32) -> Self {
         Self { value }

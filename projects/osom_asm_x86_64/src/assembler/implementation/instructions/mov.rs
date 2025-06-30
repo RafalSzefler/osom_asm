@@ -48,7 +48,7 @@ pub fn emit_mov_reg_imm(asm: &mut X86_64Assembler, dst: GPR, src: Immediate) -> 
             }
             Size::Bit64 => {
                 let imm32 = enc_models::Immediate32::from_i32(src_value);
-                asm._emit_encoded_instruction(enc::mov::encode_mov_rm64_imm32(dst.as_enc_mem(), imm32))?;
+                asm._emit_encoded_instruction(enc::mov::encode_mov_rm64_imm32(dst.as_enc_gpr_or_mem(), imm32))?;
             }
         }
     }

@@ -9,3 +9,6 @@ pub use misc::*;
 
 mod group1;
 pub use group1::*;
+
+mod control;
+pub use control::*;

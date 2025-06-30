@@ -98,11 +98,11 @@ impl X86_64Assembler {
             Instruction::Xor_RegReg { dst, src } => instructions::emit_xor_reg_reg(self, *dst, *src),
             Instruction::Xor_MemReg { dst, src } => instructions::emit_xor_mem_reg(self, dst, *src),
             Instruction::Xor_RegMem { dst, src } => instructions::emit_xor_reg_mem(self, *dst, src),
-            Instruction::Jump_Reg { dst } => todo!(),
-            Instruction::Jump_Mem { dst } => todo!(),
-            Instruction::Call_Label { dst } => todo!(),
-            Instruction::Call_Reg { dst } => todo!(),
-            Instruction::Call_Mem { dst } => todo!(),
+            Instruction::Jump_Reg { dst } => instructions::emit_jmp_reg(self, *dst),
+            Instruction::Jump_Mem { dst } => instructions::emit_jmp_mem(self, dst),
+            Instruction::Call_Label { dst } => instructions::emit_call_label(self, *dst),
+            Instruction::Call_Reg { dst } => instructions::emit_call_reg(self, *dst),
+            Instruction::Call_Mem { dst } => instructions::emit_call_mem(self, dst),
         }
     }
 }

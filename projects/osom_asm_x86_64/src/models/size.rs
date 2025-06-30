@@ -26,11 +26,6 @@ impl Size {
     pub const fn equals(self, other: Self) -> bool {
         self.value.equals(other.value)
     }
-
-    #[inline(always)]
-    pub(crate) fn as_enc_size(self) -> enc_models::Size {
-        self.value
-    }
 }
 
 impl From<enc_models::Size> for Size {
