@@ -4,7 +4,7 @@ use osom_asm_x86_64::{
     models::{Condition, GPR, Immediate, Immediate64, Instruction, Label, Memory},
 };
 
-use osom_tools_dev::macros::convert_to_fn;
+use osom_tools_dev::macros::{convert_to_fn, convert_to_fn_with_offset};
 
 mod utils;
 use utils::region_stream::RegionStream;
@@ -295,4 +295,38 @@ fn test_call_label(#[case] with_relaxation: bool) {
 
     let fn_ptr = convert_to_fn!("sysv64", stream, fn() -> i32);
     assert_eq!(unsafe { fn_ptr() }, -3);
+}
+
+#[rstest]
+#[case(false)]
+#[case(true)]
+fn test_call_with_public_label_and_backwards(#[case] with_relaxation: bool) {
+    let mut assembler = X86_64Assembler::new(with_relaxation);
+
+    const RESULT: i32 = 17;
+
+    let label = Label::new();
+    let entry = Label::new();
+
+    assembler.emit(Instruction::SetPrivate_Label { label }).unwrap();
+    assembler
+        .emit(Instruction::Mov_RegImm {
+            dst: GPR::RAX,
+            src: Immediate::new(RESULT),
+        })
+        .unwrap();
+    assembler.emit(Instruction::Ret).unwrap();
+
+    assembler.emit(Instruction::SetPublic_Label { label: entry }).unwrap();
+    assembler.emit(Instruction::Call_Label { dst: label }).unwrap();
+    assembler.emit(Instruction::Ret).unwrap();
+
+    let mut stream = RegionStream::new();
+    let result = assembler.assemble(&mut stream).unwrap();
+
+    assert_eq!(result.public_labels_positions().len(), 1);
+
+    let offset = *result.public_labels_positions().get(&entry).unwrap();
+    let fn_ptr = convert_to_fn_with_offset!("sysv64", stream, offset, fn() -> i32);
+    assert_eq!(unsafe { fn_ptr() }, RESULT);
 }

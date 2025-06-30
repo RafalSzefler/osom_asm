@@ -12,15 +12,15 @@ pub struct DeconstructedEmissionData {
 #[must_use]
 pub struct EmissionData {
     emitted_bytes: usize,
-    labels_to_position_map: HashMap<Label, usize>,
+    public_labels_positions: HashMap<Label, usize>,
 }
 
 impl EmissionData {
     #[inline(always)]
-    pub(crate) fn new(emitted_bytes: usize, labels_to_position_map: HashMap<Label, usize>) -> Self {
+    pub(crate) fn new(emitted_bytes: usize, public_labels_positions: HashMap<Label, usize>) -> Self {
         Self {
             emitted_bytes,
-            labels_to_position_map,
+            public_labels_positions,
         }
     }
 
@@ -28,7 +28,7 @@ impl EmissionData {
     #[inline(always)]
     pub const fn deconstruct(self) -> DeconstructedEmissionData {
         let emitted_bytes = self.emitted_bytes;
-        let labels_to_position_map = unsafe { std::ptr::read(&self.labels_to_position_map) };
+        let labels_to_position_map = unsafe { std::ptr::read(&self.public_labels_positions) };
         forget(self);
         DeconstructedEmissionData {
             emitted_bytes,
@@ -40,8 +40,8 @@ impl EmissionData {
     /// relative to the beginning of the code, not to the passed stream.
     #[inline(always)]
     #[must_use]
-    pub const fn labels_to_position_map(&self) -> &HashMap<Label, usize> {
-        &self.labels_to_position_map
+    pub const fn public_labels_positions(&self) -> &HashMap<Label, usize> {
+        &self.public_labels_positions
     }
 
     /// Returns the number of bytes emitted.
