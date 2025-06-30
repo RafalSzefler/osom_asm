@@ -26,12 +26,6 @@ impl RegionStream {
     pub fn as_slice(&self) -> &[u8] {
         &as_slice(&self.allocated_space)[0..self.length]
     }
-
-    #[cfg(target_arch = "x86_64")]
-    #[doc(hidden)]
-    pub fn as_ptr(&self) -> *const u8 {
-        self.allocated_space.as_ptr()
-    }
 }
 
 impl Write for RegionStream {
@@ -68,4 +62,10 @@ fn as_slice(alloc: &region::Allocation) -> &[u8] {
 #[inline(always)]
 fn as_mut_slice(alloc: &mut region::Allocation) -> &mut [u8] {
     unsafe { std::slice::from_raw_parts_mut(alloc.as_mut_ptr(), alloc.len()) }
+}
+
+unsafe impl osom_tools_dev::traits::Pointerable for RegionStream {
+    unsafe fn as_ptr(&self) -> *mut u8 {
+        self.allocated_space.as_ptr::<u8>().cast_mut()
+    }
 }

@@ -368,14 +368,12 @@ fn encode_short_cond_jump(cond: Condition, imm8: enc_models::Immediate8) -> enc_
         Condition::NotOverflow => enc::jcc::encode_jcc_NO_imm8(imm8),
         Condition::Parity => enc::jcc::encode_jcc_P_imm8(imm8),
         Condition::NotParity => enc::jcc::encode_jcc_NP_imm8(imm8),
-        Condition::ParityOdd => todo!(),
-        Condition::ParityEven => todo!(),
+        Condition::ParityOdd => enc::jcc::encode_jcc_PO_imm8(imm8),
+        Condition::ParityEven => enc::jcc::encode_jcc_PE_imm8(imm8),
         Condition::Sign => enc::jcc::encode_jcc_S_imm8(imm8),
         Condition::NotSign => enc::jcc::encode_jcc_NS_imm8(imm8),
-        Condition::Zero => todo!(),
-        Condition::NotZero => todo!(),
-        Condition::Carry => todo!(),
-        Condition::NotCarry => todo!(),
+        Condition::Carry => enc::jcc::encode_jcc_C_imm8(imm8),
+        Condition::NotCarry => enc::jcc::encode_jcc_NC_imm8(imm8),
     }
 }
 
@@ -395,13 +393,11 @@ fn encode_long_cond_jump(cond: Condition, imm32: enc_models::Immediate32) -> enc
         Condition::NotOverflow => enc::jcc::encode_jcc_NO_imm32(imm32),
         Condition::Parity => enc::jcc::encode_jcc_P_imm32(imm32),
         Condition::NotParity => enc::jcc::encode_jcc_NP_imm32(imm32),
-        Condition::ParityOdd => todo!(),
-        Condition::ParityEven => todo!(),
+        Condition::ParityOdd => enc::jcc::encode_jcc_PO_imm32(imm32),
+        Condition::ParityEven => enc::jcc::encode_jcc_PE_imm32(imm32),
         Condition::Sign => enc::jcc::encode_jcc_S_imm32(imm32),
         Condition::NotSign => enc::jcc::encode_jcc_NS_imm32(imm32),
-        Condition::Zero => todo!(),
-        Condition::NotZero => todo!(),
-        Condition::Carry => todo!(),
-        Condition::NotCarry => todo!(),
+        Condition::Carry => enc::jcc::encode_jcc_C_imm32(imm32),
+        Condition::NotCarry => enc::jcc::encode_jcc_NC_imm32(imm32),
     }
 }

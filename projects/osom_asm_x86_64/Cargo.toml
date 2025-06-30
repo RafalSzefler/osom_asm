@@ -17,10 +17,10 @@ default-target = "x86_64-unknown-linux-gnu"
 crate-type = ["lib"]
 
 [dependencies]
-osom_asm_common = { path = "../osom_asm_common" }
+osom_tools_runtime = { workspace = true }
 osom_encoders_x86_64 = { workspace = true }
 
 [dev-dependencies]
 rstest = { workspace = true }
 region = { workspace = true }
-osom_asm_test_helpers = { path = "../osom_asm_test_helpers" }
+osom_tools_dev = { workspace = true }

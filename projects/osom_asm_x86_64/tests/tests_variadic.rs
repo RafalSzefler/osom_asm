@@ -1,6 +1,6 @@
 use std::num::NonZero;
 
-use osom_asm_test_helpers::assert_eq_hex;
+use osom_tools_dev::macros::assert_eq_hex;
 use rstest::rstest;
 
 use osom_asm_x86_64::{

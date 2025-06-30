@@ -1,4 +1,4 @@
-use osom_asm_test_helpers::assert_eq_hex;
+use osom_tools_dev::macros::assert_eq_hex;
 
 use osom_asm_x86_64::assembler::X86_64Assembler;
 use osom_asm_x86_64::models::{GPR, Immediate, Instruction, Label, Memory};

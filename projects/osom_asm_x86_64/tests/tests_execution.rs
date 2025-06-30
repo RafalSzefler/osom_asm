@@ -4,7 +4,7 @@ use osom_asm_x86_64::{
     models::{GPR, Immediate, Instruction, Label, Memory},
 };
 
-use osom_asm_test_helpers::as_abi_fn;
+use osom_tools_dev::macros::convert_to_fn;
 
 mod utils;
 use utils::region_stream::RegionStream;
@@ -26,7 +26,7 @@ fn test_simple_execution(#[case] with_relaxation: bool) {
 
     let mut stream = RegionStream::new();
     assembler.assemble(&mut stream).unwrap();
-    let fn_ptr = as_abi_fn!("sysv64", stream);
+    let fn_ptr = convert_to_fn!("sysv64", stream);
     assert_eq!(unsafe { fn_ptr() }, 0);
 }
 
@@ -54,7 +54,7 @@ fn test_with_jumps(#[case] with_relaxation: bool) {
 
     let mut stream = RegionStream::new();
     assembler.assemble(&mut stream).unwrap();
-    let fn_ptr = as_abi_fn!("sysv64", stream);
+    let fn_ptr = convert_to_fn!("sysv64", stream);
     assert_eq!(unsafe { fn_ptr() }, 1);
 }
 
@@ -81,7 +81,7 @@ fn test_patchable_load(#[case] value: i32) {
     let mut stream = RegionStream::new();
     assembler.assemble(&mut stream).unwrap();
 
-    let fn_ptr = as_abi_fn!("sysv64", stream, fn() -> i32);
+    let fn_ptr = convert_to_fn!("sysv64", stream, fn() -> i32);
     assert_eq!(unsafe { fn_ptr() }, value);
 }
 
@@ -92,7 +92,6 @@ fn test_patchable_load(#[case] value: i32) {
 #[case(123456)]
 fn test_pass_and_return(#[case] value: i32) {
     let mut assembler = X86_64Assembler::new(true);
-    let label = Label::new();
     assembler
         .emit(Instruction::Mov_RegReg {
             dst: GPR::RAX,
@@ -104,6 +103,6 @@ fn test_pass_and_return(#[case] value: i32) {
     let mut stream = RegionStream::new();
     assembler.assemble(&mut stream).unwrap();
 
-    let fn_ptr = as_abi_fn!("sysv64", stream, fn(i32) -> i32);
+    let fn_ptr = convert_to_fn!("sysv64", stream, fn(i32) -> i32);
     assert_eq!(unsafe { fn_ptr(value) }, value);
 }

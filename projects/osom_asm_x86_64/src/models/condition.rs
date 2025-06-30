@@ -46,10 +46,6 @@ pub enum Condition {
 
     NotSign,
 
-    Zero,
-
-    NotZero,
-
     Carry,
 
     NotCarry,
