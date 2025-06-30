@@ -120,12 +120,14 @@ pub fn emit_cmp_reg_mem(asm: &mut X86_64Assembler, dst: GPR, src: &Memory) -> Re
     unsafe {
         let mem = src.as_enc_mem();
         let mem = enc_models::GPROrMemory::Memory { memory: mem };
+        let dst_size = dst.size();
+        let dst = dst.as_enc_gpr();
 
-        let instr = match dst.size() {
-            Size::Bit8 => enc::mov::encode_mov_reg8_rm8(dst.as_enc_gpr(), mem),
-            Size::Bit16 => enc::mov::encode_mov_reg16_rm16(dst.as_enc_gpr(), mem),
-            Size::Bit32 => enc::mov::encode_mov_reg32_rm32(dst.as_enc_gpr(), mem),
-            Size::Bit64 => enc::mov::encode_mov_reg64_rm64(dst.as_enc_gpr(), mem),
+        let instr = match dst_size {
+            Size::Bit8 => enc::mov::encode_mov_reg8_rm8(dst, mem),
+            Size::Bit16 => enc::mov::encode_mov_reg16_rm16(dst, mem),
+            Size::Bit32 => enc::mov::encode_mov_reg32_rm32(dst, mem),
+            Size::Bit64 => enc::mov::encode_mov_reg64_rm64(dst, mem),
         };
 
         helpers::update_patchable_info(asm, src, &instr);
@@ -139,12 +141,14 @@ pub fn emit_cmp_mem_reg(asm: &mut X86_64Assembler, dst: &Memory, src: GPR) -> Re
     unsafe {
         let mem = dst.as_enc_mem();
         let mem = enc_models::GPROrMemory::Memory { memory: mem };
+        let src_size = src.size();
+        let src = src.as_enc_gpr();
 
-        let instr = match src.size() {
-            Size::Bit8 => enc::cmp::encode_cmp_rm8_reg8(mem, src.as_enc_gpr()),
-            Size::Bit16 => enc::cmp::encode_cmp_rm16_reg16(mem, src.as_enc_gpr()),
-            Size::Bit32 => enc::cmp::encode_cmp_rm32_reg32(mem, src.as_enc_gpr()),
-            Size::Bit64 => enc::cmp::encode_cmp_rm64_reg64(mem, src.as_enc_gpr()),
+        let instr = match src_size {
+            Size::Bit8 => enc::cmp::encode_cmp_rm8_reg8(mem, src),
+            Size::Bit16 => enc::cmp::encode_cmp_rm16_reg16(mem, src),
+            Size::Bit32 => enc::cmp::encode_cmp_rm32_reg32(mem, src),
+            Size::Bit64 => enc::cmp::encode_cmp_rm64_reg64(mem, src),
         };
 
         helpers::update_patchable_info(asm, dst, &instr);
