@@ -17,8 +17,10 @@ fn test_simple_mov() {
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut final_code = Vec::new();
-    let _ = assembler.assemble(&mut final_code).unwrap();
-    assert_eq_hex!(final_code, [0x48, 0xC7, 0xC0, 0x00, 0x00, 0x00, 0x00, 0xC3]);
+    let result = assembler.assemble(&mut final_code).unwrap();
+    let expected = &[0x48, 0xC7, 0xC0, 0x00, 0x00, 0x00, 0x00, 0xC3];
+    assert_eq_hex!(final_code, expected);
+    assert_eq!(result.emitted_bytes(), expected.len());
 }
 
 #[rstest]
@@ -38,8 +40,9 @@ fn test_jmp(#[case] with_relaxation: bool, #[case] expected: &[u8]) {
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut final_code = Vec::new();
-    let _ = assembler.assemble(&mut final_code).unwrap();
+    let result = assembler.assemble(&mut final_code).unwrap();
     assert_eq_hex!(final_code, expected);
+    assert_eq!(result.emitted_bytes(), expected.len());
 }
 
 #[rstest]
@@ -59,8 +62,9 @@ fn test_jmp_forward(#[case] with_relaxation: bool, #[case] expected: &[u8]) {
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut final_code = Vec::new();
-    let _ = assembler.assemble(&mut final_code).unwrap();
+    let result = assembler.assemble(&mut final_code).unwrap();
     assert_eq_hex!(final_code, expected);
+    assert_eq!(result.emitted_bytes(), expected.len());
 }
 
 #[rstest]
@@ -85,8 +89,9 @@ fn test_jmp_cond(#[case] with_relaxation: bool, #[case] expected: &[u8]) {
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut final_code = Vec::new();
-    let _ = assembler.assemble(&mut final_code).unwrap();
+    let result = assembler.assemble(&mut final_code).unwrap();
     assert_eq_hex!(final_code, expected);
+    assert_eq!(result.emitted_bytes(), expected.len());
 }
 
 #[rstest]
@@ -111,6 +116,7 @@ fn test_jmp_cond_forward(#[case] with_relaxation: bool, #[case] expected: &[u8])
     assembler.emit(Instruction::Ret).unwrap();
 
     let mut final_code = Vec::new();
-    let _ = assembler.assemble(&mut final_code).unwrap();
+    let result = assembler.assemble(&mut final_code).unwrap();
     assert_eq_hex!(final_code, expected);
+    assert_eq!(result.emitted_bytes(), expected.len());
 }
