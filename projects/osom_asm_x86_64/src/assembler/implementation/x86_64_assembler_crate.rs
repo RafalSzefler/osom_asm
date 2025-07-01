@@ -6,7 +6,7 @@ use crate::assembler::implementation::PatchableImm32Instruction;
 use crate::assembler::implementation::instructions;
 use crate::{
     assembler::EmitError,
-    models::{Immediate, Instruction, Size},
+    models::{Immediate32, Instruction, Size},
 };
 
 use super::X86_64Assembler;

@@ -2,7 +2,7 @@
 
 use core::num::NonZero;
 
-use super::{Condition, GPR, Immediate, Label, Memory};
+use super::{Condition, GPR, Immediate32, Label, Memory};
 
 /// Represents custom assembly language instructions.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -35,10 +35,10 @@ pub enum Instruction {
     Mov_RegImm64 { dst: GPR, src: super::Immediate64 },
 
     /// `mov reg, imm`
-    Mov_RegImm { dst: GPR, src: Immediate },
+    Mov_RegImm { dst: GPR, src: Immediate32 },
 
     /// `mov [mem], imm`
-    Mov_MemImm { dst: Memory, src: Immediate },
+    Mov_MemImm { dst: Memory, src: Immediate32 },
 
     /// `mov reg, reg`
     Mov_RegReg { dst: GPR, src: GPR },
@@ -50,13 +50,13 @@ pub enum Instruction {
     Mov_RegMem { dst: GPR, src: Memory },
 
     /// `cmp reg, imm`
-    Cmp_RegImm { dst: GPR, src: Immediate },
+    Cmp_RegImm { dst: GPR, src: Immediate32 },
 
     /// `cmp reg, reg`
     Cmp_RegReg { dst: GPR, src: GPR },
 
     /// `cmp [mem], imm`
-    Cmp_MemImm { dst: Memory, src: Immediate },
+    Cmp_MemImm { dst: Memory, src: Immediate32 },
 
     /// `cmp reg, [mem]`
     Cmp_RegMem { dst: GPR, src: Memory },
@@ -65,10 +65,10 @@ pub enum Instruction {
     Cmp_MemReg { dst: Memory, src: GPR },
 
     /// `add reg, imm`
-    Add_RegImm { dst: GPR, src: Immediate },
+    Add_RegImm { dst: GPR, src: Immediate32 },
 
     /// `add [mem], imm`
-    Add_MemImm { dst: Memory, src: Immediate },
+    Add_MemImm { dst: Memory, src: Immediate32 },
 
     /// `add reg, reg`
     Add_RegReg { dst: GPR, src: GPR },
@@ -80,10 +80,10 @@ pub enum Instruction {
     Add_RegMem { dst: GPR, src: Memory },
 
     /// `sub reg, imm`
-    Sub_RegImm { dst: GPR, src: Immediate },
+    Sub_RegImm { dst: GPR, src: Immediate32 },
 
     /// `sub [mem], imm`
-    Sub_MemImm { dst: Memory, src: Immediate },
+    Sub_MemImm { dst: Memory, src: Immediate32 },
 
     /// `sub reg, reg`
     Sub_RegReg { dst: GPR, src: GPR },
@@ -95,10 +95,10 @@ pub enum Instruction {
     Sub_RegMem { dst: GPR, src: Memory },
 
     /// `xor reg, imm`
-    Xor_RegImm { dst: GPR, src: Immediate },
+    Xor_RegImm { dst: GPR, src: Immediate32 },
 
     /// `xor [mem], imm`
-    Xor_MemImm { dst: Memory, src: Immediate },
+    Xor_MemImm { dst: Memory, src: Immediate32 },
 
     /// `xor reg, reg`
     Xor_RegReg { dst: GPR, src: GPR },
@@ -131,7 +131,7 @@ pub enum Instruction {
     CondJump_Label { condition: Condition, dst: Label },
 
     /// `push imm`
-    Push_Imm { src: Immediate },
+    Push_Imm { src: Immediate32 },
 
     /// `push reg`: note that [`GPR`] has to be 64-bit.
     Push_Reg { src: GPR },

@@ -1,6 +1,6 @@
 use osom_asm_x86_64::{
     assembler::X86_64Assembler,
-    models::{Condition, GPR, Immediate, Instruction, Label, Memory, Scale},
+    models::{Condition, GPR, Immediate32, Instruction, Label, Memory, Scale},
 };
 use osom_tools_dev::macros::assert_eq_hex;
 use rstest::rstest;
@@ -11,7 +11,7 @@ fn test_simple_mov() {
     assembler
         .emit(Instruction::Mov_RegImm {
             dst: GPR::RAX,
-            src: Immediate::new(0),
+            src: Immediate32::new(0),
         })
         .unwrap();
     assembler.emit(Instruction::Ret).unwrap();
@@ -142,7 +142,7 @@ fn test_push_pop_imm(#[case] with_relaxation: bool, #[case] expected: &[u8]) {
     let mut assembler = X86_64Assembler::new(with_relaxation);
     assembler
         .emit(Instruction::Push_Imm {
-            src: Immediate::new(17),
+            src: Immediate32::new(17),
         })
         .unwrap();
     assembler.emit(Instruction::Pop_Reg { src: GPR::RDI }).unwrap();
@@ -159,7 +159,7 @@ fn test_push_pop_imm(#[case] with_relaxation: bool, #[case] expected: &[u8]) {
 fn test_push_pop_mem(#[case] with_relaxation: bool, #[case] expected: &[u8]) {
     let mut assembler = X86_64Assembler::new(with_relaxation);
     let label = Label::new();
-    let mem = Memory::scaled(GPR::R10, Scale::Scale2, Immediate::new(17)).unwrap();
+    let mem = Memory::scaled(GPR::R10, Scale::Scale2, Immediate32::new(17)).unwrap();
     assembler
         .emit(Instruction::Push_Mem {
             src: Memory::label(label),

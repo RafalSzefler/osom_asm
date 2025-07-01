@@ -1,6 +1,6 @@
 use osom_encoders_x86_64::models as enc_models;
 
-use super::{GPR, Immediate, Label, Scale, Size};
+use super::{GPR, Immediate32, Label, Scale, Size};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[must_use]
@@ -8,18 +8,18 @@ use super::{GPR, Immediate, Label, Scale, Size};
 pub(crate) enum MemoryImpl {
     Based {
         base: GPR,
-        offset: Immediate,
+        offset: Immediate32,
     },
     Scaled {
         index: GPR,
         scale: Scale,
-        offset: Immediate,
+        offset: Immediate32,
     },
     BasedScaled {
         base: GPR,
         index: GPR,
         scale: Scale,
-        offset: Immediate,
+        offset: Immediate32,
     },
     Label {
         label: Label,
@@ -48,7 +48,7 @@ pub enum NewMemoryError {
 
 impl Memory {
     #[inline]
-    pub fn based(base: GPR, offset: Immediate) -> Result<Self, NewMemoryError> {
+    pub fn based(base: GPR, offset: Immediate32) -> Result<Self, NewMemoryError> {
         if base.size() != Size::Bit64 {
             return Err(NewMemoryError::GPRNotBit64);
         }
@@ -59,7 +59,7 @@ impl Memory {
     }
 
     #[inline]
-    pub fn scaled(index: GPR, scale: Scale, offset: Immediate) -> Result<Self, NewMemoryError> {
+    pub fn scaled(index: GPR, scale: Scale, offset: Immediate32) -> Result<Self, NewMemoryError> {
         if index.size() != Size::Bit64 {
             return Err(NewMemoryError::GPRNotBit64);
         }
@@ -74,7 +74,7 @@ impl Memory {
     }
 
     #[inline]
-    pub fn based_scaled(base: GPR, index: GPR, scale: Scale, offset: Immediate) -> Result<Self, NewMemoryError> {
+    pub fn based_scaled(base: GPR, index: GPR, scale: Scale, offset: Immediate32) -> Result<Self, NewMemoryError> {
         if base.size() != Size::Bit64 {
             return Err(NewMemoryError::GPRNotBit64);
         }
@@ -114,7 +114,7 @@ impl Memory {
     }
 
     pub(crate) fn as_enc_mem(&self) -> enc_models::Memory {
-        const fn imm_to_offset(offset: Immediate) -> enc_models::Offset {
+        const fn imm_to_offset(offset: Immediate32) -> enc_models::Offset {
             let val = offset.value();
             if val == 0 {
                 return enc_models::Offset::None;

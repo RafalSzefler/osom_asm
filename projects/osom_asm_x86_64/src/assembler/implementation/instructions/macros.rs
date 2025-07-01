@@ -1,7 +1,7 @@
 macro_rules! generate_fn_emit_reg_imm {
     ($name:ident) => {
         paste::paste! {
-            pub fn [<emit_ $name _reg_imm>](asm: &mut crate::assembler::X86_64Assembler, dst: crate::models::GPR, src: crate::models::Immediate) -> Result<(), crate::assembler::EmitError> {
+            pub fn [<emit_ $name _reg_imm>](asm: &mut crate::assembler::X86_64Assembler, dst: crate::models::GPR, src: crate::models::Immediate32) -> Result<(), crate::assembler::EmitError> {
                 use osom_encoders_x86_64::encoders as enc;
                 use osom_encoders_x86_64::models as enc_models;
                 use crate::models::{GPR, Size};
@@ -171,7 +171,7 @@ pub(crate) use generate_fn_emit_mem_reg;
 macro_rules! generate_fn_emit_mem_imm {
     ($name:ident) => {
         paste::paste! {
-            pub fn [<emit_ $name _mem_imm>](asm: &mut crate::assembler::X86_64Assembler, dst: &crate::models::Memory, src: crate::models::Immediate) -> Result<(), crate::assembler::EmitError> {
+            pub fn [<emit_ $name _mem_imm>](asm: &mut crate::assembler::X86_64Assembler, dst: &crate::models::Memory, src: crate::models::Immediate32) -> Result<(), crate::assembler::EmitError> {
                 use osom_encoders_x86_64::encoders as enc;
                 use osom_encoders_x86_64::models as enc_models;
                 use crate::models::Size;

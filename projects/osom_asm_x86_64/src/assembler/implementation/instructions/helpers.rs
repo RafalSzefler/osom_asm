@@ -2,7 +2,7 @@ use osom_encoders_x86_64::models as enc_models;
 
 use crate::assembler::X86_64Assembler;
 use crate::assembler::implementation::PatchableImm32Instruction;
-use crate::models::{Immediate, Label, Memory, Size};
+use crate::models::{Immediate32, Label, Memory, Size};
 
 pub fn update_labeled_instruction(
     asm: &mut X86_64Assembler,
@@ -30,7 +30,7 @@ pub fn update_patchable_info_with_imm(
     asm: &mut X86_64Assembler,
     src: &Memory,
     instr: &enc_models::EncodedX86_64Instruction,
-    imm: Immediate,
+    imm: Immediate32,
 ) {
     if let Some(label) = src.get_label() {
         let position = asm._current_position();

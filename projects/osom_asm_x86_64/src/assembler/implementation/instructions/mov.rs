@@ -3,7 +3,7 @@ use osom_encoders_x86_64::models as enc_models;
 
 use crate::assembler::implementation::{PatchableImm32Instruction, instructions::emit_xor_reg_reg};
 use crate::assembler::{EmitError, X86_64Assembler};
-use crate::models::{GPR, Immediate, Immediate64, Memory, Size};
+use crate::models::{GPR, Immediate32, Immediate64, Memory, Size};
 
 use super::helpers;
 
@@ -19,12 +19,12 @@ pub fn emit_mov_reg_imm64(asm: &mut X86_64Assembler, dst: GPR, src: Immediate64)
             return Ok(());
         }
 
-        let imm = Immediate::from(src_value as i32);
+        let imm = Immediate32::from(src_value as i32);
         emit_mov_reg_imm(asm, dst, imm)
     }
 }
 
-pub fn emit_mov_reg_imm(asm: &mut X86_64Assembler, dst: GPR, src: Immediate) -> Result<(), EmitError> {
+pub fn emit_mov_reg_imm(asm: &mut X86_64Assembler, dst: GPR, src: Immediate32) -> Result<(), EmitError> {
     unsafe {
         let dst_size = dst.size();
         let src_size = src.real_size();

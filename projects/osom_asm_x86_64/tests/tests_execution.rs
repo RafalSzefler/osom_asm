@@ -1,7 +1,7 @@
 #![cfg(target_arch = "x86_64")]
 use osom_asm_x86_64::{
     assembler::X86_64Assembler,
-    models::{Condition, GPR, Immediate, Immediate64, Instruction, Label, Memory},
+    models::{Condition, GPR, Immediate32, Immediate64, Instruction, Label, Memory},
 };
 
 use osom_tools_dev::macros::{convert_to_fn, convert_to_fn_with_offset};
@@ -19,7 +19,7 @@ fn test_simple_execution(#[case] with_relaxation: bool) {
     assembler
         .emit(Instruction::Mov_RegImm {
             dst: GPR::RAX,
-            src: Immediate::new(0),
+            src: Immediate32::new(0),
         })
         .unwrap();
     assembler.emit(Instruction::Ret).unwrap();
@@ -39,14 +39,14 @@ fn test_with_jumps(#[case] with_relaxation: bool) {
     assembler
         .emit(Instruction::Mov_RegImm {
             dst: GPR::RAX,
-            src: Immediate::new(1),
+            src: Immediate32::new(1),
         })
         .unwrap();
     assembler.emit(Instruction::Jump_Label { dst: label }).unwrap();
     assembler
         .emit(Instruction::Mov_RegImm {
             dst: GPR::RAX,
-            src: Immediate::new(0),
+            src: Immediate32::new(0),
         })
         .unwrap();
     assembler.emit(Instruction::SetPrivate_Label { label }).unwrap();
@@ -122,7 +122,7 @@ fn test_cmp_reg_imm(#[case] with_relaxation: bool) {
     assembler
         .emit(Instruction::Cmp_RegImm {
             dst: GPR::RDI,
-            src: Immediate::new(0),
+            src: Immediate32::new(0),
         })
         .unwrap();
     assembler
@@ -134,7 +134,7 @@ fn test_cmp_reg_imm(#[case] with_relaxation: bool) {
     assembler
         .emit(Instruction::Mov_RegImm {
             dst: GPR::RAX,
-            src: Immediate::new(1),
+            src: Immediate32::new(1),
         })
         .unwrap();
     assembler.emit(Instruction::SetPrivate_Label { label }).unwrap();
@@ -203,7 +203,7 @@ fn test_jmp_mem(#[case] with_relaxation: bool) {
         .unwrap();
     assembler
         .emit(Instruction::Jump_Mem {
-            dst: Memory::based(GPR::R10, Immediate::ZERO).unwrap(),
+            dst: Memory::based(GPR::R10, Immediate32::ZERO).unwrap(),
         })
         .unwrap();
 
@@ -260,7 +260,7 @@ fn test_call_mem(#[case] with_relaxation: bool) {
         .unwrap();
     assembler
         .emit(Instruction::Call_Mem {
-            dst: Memory::based(GPR::R10, Immediate::ZERO).unwrap(),
+            dst: Memory::based(GPR::R10, Immediate32::ZERO).unwrap(),
         })
         .unwrap();
     assembler.emit(Instruction::Ret).unwrap();
@@ -285,7 +285,7 @@ fn test_call_label(#[case] with_relaxation: bool) {
     assembler
         .emit(Instruction::Mov_RegImm {
             dst: GPR::RAX,
-            src: Immediate::new(-3),
+            src: Immediate32::new(-3),
         })
         .unwrap();
     assembler.emit(Instruction::Ret).unwrap();
@@ -312,7 +312,7 @@ fn test_call_with_public_label_and_backwards(#[case] with_relaxation: bool) {
     assembler
         .emit(Instruction::Mov_RegImm {
             dst: GPR::RAX,
-            src: Immediate::new(RESULT),
+            src: Immediate32::new(RESULT),
         })
         .unwrap();
     assembler.emit(Instruction::Ret).unwrap();

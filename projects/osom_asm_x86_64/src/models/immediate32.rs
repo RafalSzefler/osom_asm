@@ -4,11 +4,11 @@ use super::Size;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(transparent)]
 #[must_use]
-pub struct Immediate {
+pub struct Immediate32 {
     value: i32,
 }
 
-impl Immediate {
+impl Immediate32 {
     pub const ZERO: Self = Self::new(0);
 
     #[inline(always)]
@@ -40,16 +40,16 @@ impl Immediate {
     }
 }
 
-impl From<i32> for Immediate {
+impl From<i32> for Immediate32 {
     #[inline(always)]
     fn from(value: i32) -> Self {
         Self::new(value)
     }
 }
 
-impl From<Immediate> for i32 {
+impl From<Immediate32> for i32 {
     #[inline(always)]
-    fn from(immediate: Immediate) -> Self {
+    fn from(immediate: Immediate32) -> Self {
         immediate.value()
     }
 }

@@ -11,8 +11,8 @@ pub use gpr_kind::*;
 mod gpr;
 pub use gpr::*;
 
-mod immediate;
-pub use immediate::*;
+mod immediate32;
+pub use immediate32::*;
 
 mod immediate64;
 pub use immediate64::*;

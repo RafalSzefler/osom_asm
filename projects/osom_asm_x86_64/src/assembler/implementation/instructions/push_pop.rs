@@ -4,10 +4,10 @@ use osom_encoders_x86_64::models as enc_models;
 use crate::assembler::implementation::instructions::helpers::update_patchable_info;
 use crate::{
     assembler::{EmitError, X86_64Assembler},
-    models::{GPR, Immediate, Memory, Size},
+    models::{GPR, Immediate32, Memory, Size},
 };
 
-pub fn emit_push_imm(asm: &mut X86_64Assembler, src: Immediate) -> Result<(), EmitError> {
+pub fn emit_push_imm(asm: &mut X86_64Assembler, src: Immediate32) -> Result<(), EmitError> {
     let instruction = match src.real_size() {
         Size::Bit32 => {
             let imm32 = enc_models::Immediate32::from_i32(src.value());

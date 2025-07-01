@@ -1,6 +1,6 @@
 use rstest::rstest;
 
-use osom_asm_x86_64::models::{Immediate, Immediate64, Size};
+use osom_asm_x86_64::models::{Immediate32, Immediate64, Size};
 
 #[rstest]
 #[case(0, Size::Bit8)]
@@ -17,7 +17,7 @@ use osom_asm_x86_64::models::{Immediate, Immediate64, Size};
 #[case(250000000, Size::Bit32)]
 #[case(i32::MAX as i32, Size::Bit32)]
 fn test_imm_size(#[case] value: i32, #[case] expected: Size) {
-    let imm = Immediate::new(value);
+    let imm = Immediate32::new(value);
     assert_eq!(imm.real_size(), expected);
 }
 

@@ -1,6 +1,6 @@
 use core::mem::size_of;
 
-use super::{Condition, GPR, GPRKind, Immediate, Immediate64, Instruction, Label, Memory, Scale, Size};
+use super::{Condition, GPR, GPRKind, Immediate32, Immediate64, Instruction, Label, Memory, Scale, Size};
 
 const _: () = const {
     // Checks some invariants about the size of the models.
@@ -11,7 +11,7 @@ const _: () = const {
     assert!(size_of::<Option<GPRKind>>() == 1, "Option<GPRKind> size must be 1 byte");
     assert!(size_of::<Size>() == 1, "Size size must be 1 byte");
     assert!(size_of::<Option<Size>>() == 1, "Option<Size> size must be 1 byte");
-    assert!(size_of::<Immediate>() == 4, "Immediate size must be 4 bytes");
+    assert!(size_of::<Immediate32>() == 4, "Immediate size must be 4 bytes");
     assert!(size_of::<Immediate64>() == 8, "Immediate64 size must be 8 bytes");
     assert!(size_of::<Memory>() <= 8, "Memory size must be at most 8 bytes");
     assert!(size_of::<Label>() == 4, "Label size must be 4 bytes");
