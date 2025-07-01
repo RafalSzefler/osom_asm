@@ -9,7 +9,7 @@ use super::{Condition, GPR, Immediate32, Label, Memory};
 #[must_use]
 #[repr(u16)]
 pub enum Instruction {
-    /// `nop` extended to specified `length`
+    /// `nop` extended to specified non-zero `length`
     Nop { length: NonZero<u32> } = 1, // We start from 1 because we want Option<Instruction> to be optimized.
 
     /// Pseudoinstruction: sets label at current position.
@@ -109,7 +109,12 @@ pub enum Instruction {
     /// `xor reg, [mem]`
     Xor_RegMem { dst: GPR, src: Memory },
 
-    /// Pseudoinstruction: jumps to label.
+    /// Jumps to label.
+    ///
+    /// # Notes
+    ///
+    /// Pseudoinstruction: it is compiled into RIP-relative jump
+    /// at the machine level.
     Jump_Label { dst: Label },
 
     /// `jmp reg`
@@ -118,7 +123,12 @@ pub enum Instruction {
     /// `jmp [mem]`
     Jump_Mem { dst: Memory },
 
-    /// Pseudoinstruction: calls label.
+    /// Calls label.
+    ///
+    /// # Notes
+    ///
+    /// Pseudoinstruction: it is compiled into RIP-relative call
+    /// at the machine level.
     Call_Label { dst: Label },
 
     /// `call reg`
@@ -127,7 +137,12 @@ pub enum Instruction {
     /// `call [mem]`
     Call_Mem { dst: Memory },
 
-    /// Pseudoinstruction: conditionally jumps to label.
+    /// Conditional jump to label.
+    ///
+    /// # Notes
+    ///
+    /// Pseudoinstruction: it is compiled into RIP-relative jump
+    /// at the machine level.
     CondJump_Label { condition: Condition, dst: Label },
 
     /// `push imm`
@@ -139,7 +154,11 @@ pub enum Instruction {
     /// `push [mem]`
     Push_Mem { src: Memory },
 
-    /// `pop reg`: note that [`GPR`] has to be 64-bit.
+    /// `pop reg`
+    ///
+    /// # Notes
+    ///
+    /// The `src` value has to be a 64-bit [`GPR`].
     Pop_Reg { src: GPR },
 
     /// `pop [mem]`
