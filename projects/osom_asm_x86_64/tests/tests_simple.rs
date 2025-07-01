@@ -1,6 +1,6 @@
 use osom_asm_x86_64::{
     assembler::X86_64Assembler,
-    models::{Condition, GPR, Immediate, Instruction, Label},
+    models::{Condition, GPR, Immediate, Instruction, Label, Memory, Scale},
 };
 use osom_tools_dev::macros::assert_eq_hex;
 use rstest::rstest;
@@ -115,6 +115,59 @@ fn test_jmp_cond_forward(#[case] with_relaxation: bool, #[case] expected: &[u8])
     assembler.emit(Instruction::SetPrivate_Label { label }).unwrap();
     assembler.emit(Instruction::Ret).unwrap();
 
+    let mut final_code = Vec::new();
+    let result = assembler.assemble(&mut final_code).unwrap();
+    assert_eq_hex!(final_code, expected);
+    assert_eq!(result.emitted_bytes(), expected.len());
+}
+
+#[rstest]
+#[case(true, &[0x50, 0x5F, 0xC3])]
+#[case(false, &[0x50, 0x5F, 0xc3])]
+fn test_push_pop(#[case] with_relaxation: bool, #[case] expected: &[u8]) {
+    let mut assembler = X86_64Assembler::new(with_relaxation);
+    assembler.emit(Instruction::Push_Reg { src: GPR::RAX }).unwrap();
+    assembler.emit(Instruction::Pop_Reg { src: GPR::RDI }).unwrap();
+    assembler.emit(Instruction::Ret).unwrap();
+    let mut final_code = Vec::new();
+    let result = assembler.assemble(&mut final_code).unwrap();
+    assert_eq_hex!(final_code, expected);
+    assert_eq!(result.emitted_bytes(), expected.len());
+}
+
+#[rstest]
+#[case(true, &[0x6A, 0x11, 0x5F, 0xC3])]
+#[case(false, &[0x6A, 0x11, 0x5F, 0xC3])]
+fn test_push_pop_imm(#[case] with_relaxation: bool, #[case] expected: &[u8]) {
+    let mut assembler = X86_64Assembler::new(with_relaxation);
+    assembler
+        .emit(Instruction::Push_Imm {
+            src: Immediate::new(17),
+        })
+        .unwrap();
+    assembler.emit(Instruction::Pop_Reg { src: GPR::RDI }).unwrap();
+    assembler.emit(Instruction::Ret).unwrap();
+    let mut final_code = Vec::new();
+    let result = assembler.assemble(&mut final_code).unwrap();
+    assert_eq_hex!(final_code, expected);
+    assert_eq!(result.emitted_bytes(), expected.len());
+}
+
+#[rstest]
+#[case(true, &[0xFF, 0x35, 0x08, 0x00, 0x00, 0x00, 0x42, 0x8F, 0x04, 0x55, 0x11, 0x00, 0x00, 0x00, 0xC3])]
+#[case(false, &[0xFF, 0x35, 0x08, 0x00, 0x00, 0x00, 0x42, 0x8F, 0x04, 0x55, 0x11, 0x00, 0x00, 0x00, 0xC3])]
+fn test_push_pop_mem(#[case] with_relaxation: bool, #[case] expected: &[u8]) {
+    let mut assembler = X86_64Assembler::new(with_relaxation);
+    let label = Label::new();
+    let mem = Memory::scaled(GPR::R10, Scale::Scale2, Immediate::new(17)).unwrap();
+    assembler
+        .emit(Instruction::Push_Mem {
+            src: Memory::label(label),
+        })
+        .unwrap();
+    assembler.emit(Instruction::Pop_Mem { src: mem }).unwrap();
+    assembler.emit(Instruction::SetPrivate_Label { label }).unwrap();
+    assembler.emit(Instruction::Ret).unwrap();
     let mut final_code = Vec::new();
     let result = assembler.assemble(&mut final_code).unwrap();
     assert_eq_hex!(final_code, expected);

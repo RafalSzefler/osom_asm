@@ -37,7 +37,6 @@ impl X86_64Assembler {
     #[allow(clippy::too_many_lines)]
     pub(crate) fn _emit_instruction(&mut self, instruction: &Instruction) -> Result<(), EmitError> {
         match instruction {
-            // Pseudo-instructions
             Instruction::SetPrivate_Label { label } => {
                 self._insert_label(*label)?;
                 Ok(())
@@ -47,9 +46,6 @@ impl X86_64Assembler {
                 self.public_labels.push(*label);
                 Ok(())
             }
-
-            // The only two special instructions that have different encoding
-            // depending on the context. Handled through relaxation algorithm.
             Instruction::Jump_Label { dst } => {
                 let new_fragment = Fragment::Relaxable_Jump {
                     variant: self._relaxation_variant(),
@@ -67,10 +63,6 @@ impl X86_64Assembler {
                 self._push_new_fragment(new_fragment);
                 Ok(())
             }
-
-            // Remaining instructions are not relaxable. But we still need to track
-            // labels, since some instructions may utilize them, e.g. those that
-            // use memory operands.
             Instruction::Ret => self._emit_bytes(const_encodings::RET),
             Instruction::Cpuid => self._emit_bytes(const_encodings::CPUID),
             Instruction::Nop { length } => instructions::emit_nop_with_length(self, *length),
@@ -105,6 +97,11 @@ impl X86_64Assembler {
             Instruction::Call_Label { dst } => instructions::emit_call_label(self, *dst),
             Instruction::Call_Reg { dst } => instructions::emit_call_reg(self, *dst),
             Instruction::Call_Mem { dst } => instructions::emit_call_mem(self, dst),
+            Instruction::Push_Imm { src } => instructions::emit_push_imm(self, *src),
+            Instruction::Push_Reg { src } => instructions::emit_push_reg(self, *src),
+            Instruction::Push_Mem { src } => instructions::emit_push_mem(self, src),
+            Instruction::Pop_Reg { src } => instructions::emit_pop_reg(self, *src),
+            Instruction::Pop_Mem { src } => instructions::emit_pop_mem(self, src),
         }
     }
 }

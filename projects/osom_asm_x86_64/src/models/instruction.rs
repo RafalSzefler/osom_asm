@@ -129,4 +129,19 @@ pub enum Instruction {
 
     /// Pseudoinstruction: conditionally jumps to label.
     CondJump_Label { condition: Condition, dst: Label },
+
+    /// `push imm`
+    Push_Imm { src: Immediate },
+
+    /// `push reg`: note that [`GPR`] has to be 64-bit.
+    Push_Reg { src: GPR },
+
+    /// `push [mem]`
+    Push_Mem { src: Memory },
+
+    /// `pop reg`: note that [`GPR`] has to be 64-bit.
+    Pop_Reg { src: GPR },
+
+    /// `pop [mem]`
+    Pop_Mem { src: Memory },
 }
