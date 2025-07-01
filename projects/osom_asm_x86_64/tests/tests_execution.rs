@@ -330,3 +330,113 @@ fn test_call_with_public_label_and_backwards(#[case] with_relaxation: bool) {
     let fn_ptr = convert_to_fn_with_offset!("sysv64", stream, offset, fn() -> i32);
     assert_eq!(unsafe { fn_ptr() }, RESULT);
 }
+
+#[rstest]
+#[case(false)]
+#[case(true)]
+fn test_fibonacci(#[case] with_relaxation: bool) {
+    let mut assembler = X86_64Assembler::new(with_relaxation);
+
+    let entry = Label::new();
+    let recursion_entry = Label::new();
+    let initial_skip = Label::new();
+
+    assembler.emit(Instruction::SetPublic_Label { label: entry }).unwrap();
+    assembler
+        .emit(Instruction::Cmp_RegImm {
+            dst: GPR::RDI,
+            src: Immediate32::ZERO,
+        })
+        .unwrap();
+    assembler
+        .emit(Instruction::CondJump_Label {
+            condition: Condition::GreaterOrEqual,
+            dst: recursion_entry,
+        })
+        .unwrap();
+    assembler
+        .emit(Instruction::Mov_RegImm {
+            dst: GPR::RAX,
+            src: Immediate32::new(-1),
+        })
+        .unwrap();
+    assembler.emit(Instruction::Ret).unwrap();
+    assembler
+        .emit(Instruction::SetPrivate_Label { label: recursion_entry })
+        .unwrap();
+    assembler
+        .emit(Instruction::Cmp_RegImm {
+            dst: GPR::RDI,
+            src: Immediate32::new(1),
+        })
+        .unwrap();
+    assembler
+        .emit(Instruction::CondJump_Label {
+            condition: Condition::Greater,
+            dst: initial_skip,
+        })
+        .unwrap();
+    assembler
+        .emit(Instruction::Mov_RegImm {
+            dst: GPR::RAX,
+            src: Immediate32::new(1),
+        })
+        .unwrap();
+    assembler.emit(Instruction::Ret).unwrap();
+    assembler
+        .emit(Instruction::SetPrivate_Label { label: initial_skip })
+        .unwrap();
+    assembler
+        .emit(Instruction::Sub_RegImm {
+            dst: GPR::RDI,
+            src: Immediate32::new(1),
+        })
+        .unwrap();
+    assembler.emit(Instruction::Push_Reg { src: GPR::RDI }).unwrap();
+    assembler
+        .emit(Instruction::Call_Label { dst: recursion_entry })
+        .unwrap();
+    assembler.emit(Instruction::Pop_Reg { src: GPR::RDI }).unwrap();
+    assembler
+        .emit(Instruction::Sub_RegImm {
+            dst: GPR::RDI,
+            src: Immediate32::new(1),
+        })
+        .unwrap();
+    assembler.emit(Instruction::Push_Reg { src: GPR::RAX }).unwrap();
+    assembler
+        .emit(Instruction::Call_Label { dst: recursion_entry })
+        .unwrap();
+    assembler.emit(Instruction::Pop_Reg { src: GPR::RDI }).unwrap();
+    assembler
+        .emit(Instruction::Add_RegReg {
+            dst: GPR::RAX,
+            src: GPR::RDI,
+        })
+        .unwrap();
+    assembler.emit(Instruction::Ret).unwrap();
+
+    let mut stream = RegionStream::new();
+    let result = assembler.assemble(&mut stream).unwrap();
+
+    assert_eq!(result.public_labels_positions().len(), 1);
+
+    let offset = *result.public_labels_positions().get(&entry).unwrap();
+    let fn_ptr = convert_to_fn_with_offset!("sysv64", stream, offset, fn(i64) -> i64);
+
+    fn fibonacci(n: i64) -> i64 {
+        if n < 0 {
+            return -1;
+        }
+
+        if n <= 1 {
+            return 1;
+        }
+
+        fibonacci(n - 1) + fibonacci(n - 2)
+    }
+
+    for i in -100..20 {
+        assert_eq!(unsafe { fn_ptr(i) }, fibonacci(i));
+    }
+}
