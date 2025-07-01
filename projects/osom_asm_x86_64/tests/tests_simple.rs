@@ -173,3 +173,60 @@ fn test_push_pop_mem(#[case] with_relaxation: bool, #[case] expected: &[u8]) {
     assert_eq_hex!(final_code, expected);
     assert_eq!(result.emitted_bytes(), expected.len());
 }
+
+#[rstest]
+#[case(true, &[0xCD, 0x00, 0xF1, 0xCD, 0x02, 0xCC, 0xCD, 0x04, 0xCD, 0x05, 0xCD, 0x06, 0xCD, 0xFE, 0xCD, 0xFF, 0xC3])]
+#[case(false, &[0xCD, 0x00, 0xF1, 0xCD, 0x02, 0xCC, 0xCD, 0x04, 0xCD, 0x05, 0xCD, 0x06, 0xCD, 0xFE, 0xCD, 0xFF, 0xC3])]
+fn test_int_imm(#[case] with_relaxation: bool, #[case] expected: &[u8]) {
+    let mut assembler = X86_64Assembler::new(with_relaxation);
+    assembler
+        .emit(Instruction::Int_Imm {
+            src: Immediate32::new(0),
+        })
+        .unwrap();
+    assembler
+        .emit(Instruction::Int_Imm {
+            src: Immediate32::new(1),
+        })
+        .unwrap();
+    assembler
+        .emit(Instruction::Int_Imm {
+            src: Immediate32::new(2),
+        })
+        .unwrap();
+    assembler
+        .emit(Instruction::Int_Imm {
+            src: Immediate32::new(3),
+        })
+        .unwrap();
+    assembler
+        .emit(Instruction::Int_Imm {
+            src: Immediate32::new(4),
+        })
+        .unwrap();
+    assembler
+        .emit(Instruction::Int_Imm {
+            src: Immediate32::new(5),
+        })
+        .unwrap();
+    assembler
+        .emit(Instruction::Int_Imm {
+            src: Immediate32::new(6),
+        })
+        .unwrap();
+    assembler
+        .emit(Instruction::Int_Imm {
+            src: Immediate32::new(254),
+        })
+        .unwrap();
+    assembler
+        .emit(Instruction::Int_Imm {
+            src: Immediate32::new(255),
+        })
+        .unwrap();
+    assembler.emit(Instruction::Ret).unwrap();
+    let mut final_code = Vec::new();
+    let result = assembler.assemble(&mut final_code).unwrap();
+    assert_eq_hex!(final_code, expected);
+    assert_eq!(result.emitted_bytes(), expected.len());
+}

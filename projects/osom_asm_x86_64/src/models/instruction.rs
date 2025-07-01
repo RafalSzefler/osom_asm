@@ -163,4 +163,11 @@ pub enum Instruction {
 
     /// `pop [mem]`
     Pop_Mem { src: Memory },
+
+    /// `int imm`
+    ///
+    /// # Notes
+    ///
+    /// The value of `src` has to be an 8-bit unsigned integer.
+    Int_Imm { src: Immediate32 },
 }

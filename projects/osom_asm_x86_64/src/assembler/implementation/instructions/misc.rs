@@ -1,8 +1,10 @@
 use std::num::NonZero;
 
 use osom_encoders_x86_64::encoders as enc;
+use osom_encoders_x86_64::models as enc_models;
 
 use crate::assembler::{EmitError, X86_64Assembler};
+use crate::models::{Immediate32, Size};
 
 pub fn emit_nop_with_length(asm: &mut X86_64Assembler, length: NonZero<u32>) -> Result<(), EmitError> {
     let value = length.get();
@@ -18,5 +20,23 @@ pub fn emit_nop_with_length(asm: &mut X86_64Assembler, length: NonZero<u32>) -> 
     if remainder > 0 {
         asm._emit_encoded_instruction(enc::miscellaneous::encode_nop_with_length(remainder))?;
     }
+    Ok(())
+}
+
+pub fn emit_int_imm(asm: &mut X86_64Assembler, src: Immediate32) -> Result<(), EmitError> {
+    let value = src.value();
+    if !(0..=255).contains(&value) {
+        return Err(EmitError::OperandSizeMismatch);
+    }
+
+    #[allow(clippy::cast_sign_loss)]
+    let value = value as u8;
+
+    let instruction = match value {
+        1 => enc::singleton::encode_int1(),
+        3 => enc::singleton::encode_int3(),
+        _ => enc::singleton::encode_int_imm8(enc_models::Immediate8::from_u8(value)),
+    };
+    asm._emit_encoded_instruction(instruction)?;
     Ok(())
 }

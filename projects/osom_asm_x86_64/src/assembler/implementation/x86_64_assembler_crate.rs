@@ -102,6 +102,7 @@ impl X86_64Assembler {
             Instruction::Push_Mem { src } => instructions::emit_push_mem(self, src),
             Instruction::Pop_Reg { src } => instructions::emit_pop_reg(self, *src),
             Instruction::Pop_Mem { src } => instructions::emit_pop_mem(self, src),
+            Instruction::Int_Imm { src } => instructions::emit_int_imm(self, *src),
         }
     }
 }
