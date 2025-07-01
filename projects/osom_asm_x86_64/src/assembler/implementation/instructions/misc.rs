@@ -4,7 +4,7 @@ use osom_encoders_x86_64::encoders as enc;
 use osom_encoders_x86_64::models as enc_models;
 
 use crate::assembler::{EmitError, X86_64Assembler};
-use crate::models::{Immediate32, Size};
+use crate::models::Immediate32;
 
 pub fn emit_nop_with_length(asm: &mut X86_64Assembler, length: NonZero<u32>) -> Result<(), EmitError> {
     let value = length.get();

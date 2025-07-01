@@ -1,4 +1,5 @@
-use crate::assembler::{EmitError, X86_64Emitable};
+use crate::assembler::EmitError;
+use crate::assembler::traits::X86_64Emitable;
 
 use super::X86_64Assembler;
 

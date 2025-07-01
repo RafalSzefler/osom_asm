@@ -1,11 +1,8 @@
 use osom_encoders_x86_64::encoders as enc;
 use osom_encoders_x86_64::models as enc_models;
 
-use crate::assembler::implementation::{PatchableImm32Instruction, instructions::emit_xor_reg_reg};
 use crate::assembler::{EmitError, X86_64Assembler};
-use crate::models::{GPR, Immediate32, Immediate64, Memory, Size};
-
-use super::helpers;
+use crate::models::{GPR, Immediate32, Immediate64, Size};
 
 pub fn emit_mov_reg_imm64(asm: &mut X86_64Assembler, dst: GPR, src: Immediate64) -> Result<(), EmitError> {
     unsafe {

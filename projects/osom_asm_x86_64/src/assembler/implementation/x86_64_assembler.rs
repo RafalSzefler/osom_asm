@@ -2,7 +2,6 @@
 
 use std::collections::HashMap;
 
-use osom_encoders_x86_64::models::EncodedX86_64Instruction;
 use osom_tools_runtime::InlineVec;
 
 use crate::assembler::EmitError;

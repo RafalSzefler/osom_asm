@@ -109,7 +109,6 @@ macro_rules! generate_fn_emit_reg_mem {
         paste::paste! {
             pub fn [<emit_ $name _reg_mem>](asm: &mut crate::assembler::X86_64Assembler, dst: crate::models::GPR, src: &crate::models::Memory) -> Result<(), crate::assembler::EmitError> {
                 use osom_encoders_x86_64::encoders as enc;
-                use osom_encoders_x86_64::models as enc_models;
                 use crate::models::Size;
                 use crate::assembler::implementation::instructions::helpers;
 
@@ -141,7 +140,6 @@ macro_rules! generate_fn_emit_mem_reg {
         paste::paste! {
             pub fn [<emit_ $name _mem_reg>](asm: &mut crate::assembler::X86_64Assembler, dst: &crate::models::Memory, src: crate::models::GPR) -> Result<(), crate::assembler::EmitError> {
                 use osom_encoders_x86_64::encoders as enc;
-                use osom_encoders_x86_64::models as enc_models;
                 use crate::models::Size;
                 use crate::assembler::implementation::instructions::helpers;
 

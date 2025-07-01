@@ -2,12 +2,8 @@ use osom_encoders_x86_64::encoders as enc;
 use osom_encoders_x86_64::models as enc_models;
 
 use super::fragment::Fragment;
-use crate::assembler::implementation::PatchableImm32Instruction;
 use crate::assembler::implementation::instructions;
-use crate::{
-    assembler::EmitError,
-    models::{Immediate32, Instruction, Size},
-};
+use crate::{assembler::EmitError, models::Instruction};
 
 use super::X86_64Assembler;
 
