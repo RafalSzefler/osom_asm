@@ -13,6 +13,7 @@ impl X86_64Assembler {
     /// The method accepts the private `X86_64Emitable` trait. At the moment
     /// the following types implement it: arrays, slices and [`Instruction`][`crate::models::Instruction`].
     #[allow(private_bounds)]
+    #[inline(always)]
     pub fn emit(&mut self, value: impl X86_64Emitable) -> Result<(), EmitError> {
         value.emit_to(self)
     }
