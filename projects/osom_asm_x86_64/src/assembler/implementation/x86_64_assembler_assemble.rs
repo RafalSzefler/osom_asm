@@ -22,18 +22,7 @@ use crate::models::Label;
 use super::macros::{fragment_at_index, fragment_at_index_mut};
 use super::{X86_64Assembler, fragment::Fragment};
 
-impl X86_64Assembler {
-    /// Finalizes emitted code, optimizes it and writes the raw binary machine code back to the passed stream.
-    pub fn assemble(mut self, stream: &mut impl std::io::Write) -> Result<EmissionData, AssembleError> {
-        let mut offsets = calculate_initial_offsets(&self)?;
-        relax_instructions_and_update_offsets(&mut self, &mut offsets)?;
-        let labels_map = calculate_labels_map(&self, &offsets)?;
-        patch_addresses(&mut self, &labels_map, &offsets)?;
-        emit_fragments(&self, &labels_map, &offsets, stream)
-    }
-}
-
-fn calculate_initial_offsets(asm: &X86_64Assembler) -> Result<HashMap<FragmentOrderId, i32>, AssembleError> {
+pub(super) fn calculate_initial_offsets(asm: &X86_64Assembler) -> Result<HashMap<FragmentOrderId, i32>, AssembleError> {
     let mut result = HashMap::with_capacity(asm.fragments_count as usize);
 
     let start = fragment_at_index!(asm, 0) as *const Fragment;
@@ -64,7 +53,7 @@ fn calculate_initial_offsets(asm: &X86_64Assembler) -> Result<HashMap<FragmentOr
 /// But it is needed, so I won't dive deep into it.
 const MAGIC_SHIFT: isize = 3;
 
-fn relax_instructions_and_update_offsets(
+pub(super) fn relax_instructions_and_update_offsets(
     asm: &mut X86_64Assembler,
     offsets: &mut HashMap<FragmentOrderId, i32>,
 ) -> Result<(), AssembleError> {
@@ -167,7 +156,7 @@ fn relax_instructions_and_update_offsets(
     Ok(())
 }
 
-fn calculate_labels_map(
+pub(super) fn calculate_labels_map(
     asm: &X86_64Assembler,
     offsets: &HashMap<FragmentOrderId, i32>,
 ) -> Result<HashMap<Label, i32>, AssembleError> {
@@ -189,7 +178,7 @@ fn calculate_labels_map(
     Ok(result)
 }
 
-fn patch_addresses(
+pub(super) fn patch_addresses(
     asm: &mut X86_64Assembler,
     labels_map: &HashMap<Label, i32>,
     offsets: &HashMap<FragmentOrderId, i32>,
@@ -232,7 +221,7 @@ fn patch_addresses(
     Ok(())
 }
 
-fn emit_fragments(
+pub(super) fn emit_fragments(
     asm: &X86_64Assembler,
     labels_map: &HashMap<Label, i32>,
     offsets: &HashMap<FragmentOrderId, i32>,
