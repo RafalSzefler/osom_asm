@@ -7,11 +7,33 @@ macro_rules! generate_fn_emit_reg_imm {
                 use crate::models::{GPR, Size};
 
                 unsafe {
+                    let dst_mem = dst.as_enc_gpr_or_mem();
+                    let dst_size = dst.size();
                     let src_value = src.value();
                     let src_real_size = src.real_size();
-                    if dst.eq(&GPR::AL) && src_real_size.eq(&Size::Bit8) {
+
+                    if src_real_size.eq(&Size::Bit8) {
                         let imm8 = enc_models::Immediate8::from_i8(src_value as i8);
-                        asm._emit_encoded_instruction(enc::$name::[<encode_ $name _AL_imm8>](imm8))?;
+
+                        if dst.eq(&GPR::AL) {
+                            asm._emit_encoded_instruction(enc::$name::[<encode_ $name _AL_imm8>](imm8))?;
+                            return Ok(());
+                        }
+
+                        match dst_size {
+                            Size::Bit8 => {
+                                asm._emit_encoded_instruction(enc::$name::[<encode_ $name _rm8_imm8>](dst_mem, imm8))
+                            }
+                            Size::Bit16 => {
+                                asm._emit_encoded_instruction(enc::$name::[<encode_ $name _rm16_imm8>](dst_mem, imm8))
+                            }
+                            Size::Bit32 => {
+                                asm._emit_encoded_instruction(enc::$name::[<encode_ $name _rm32_imm8>](dst_mem, imm8))
+                            }
+                            Size::Bit64 => {
+                                asm._emit_encoded_instruction(enc::$name::[<encode_ $name _rm64_imm8>](dst_mem, imm8))
+                            }
+                        }?;
                         return Ok(());
                     }
 
@@ -33,30 +55,28 @@ macro_rules! generate_fn_emit_reg_imm {
                         return Ok(());
                     }
 
-                    if dst.size() < src_real_size {
+                    if dst_size < src_real_size {
                         return Err(crate::assembler::EmitError::OperandSizeMismatch);
                     }
 
-                    let dst_mem = dst.as_enc_gpr_or_mem();
-
-                    match dst.size() {
+                    match dst_size {
                         Size::Bit8 => {
                             let imm8 = enc_models::Immediate8::from_i8(src_value as i8);
-                            asm._emit_encoded_instruction(enc::$name::[<encode_ $name _rm8_imm8>](dst_mem, imm8))?;
+                            asm._emit_encoded_instruction(enc::$name::[<encode_ $name _rm8_imm8>](dst_mem, imm8))
                         }
                         Size::Bit16 => {
                             let imm16 = enc_models::Immediate16::from_i16(src_value as i16);
-                            asm._emit_encoded_instruction(enc::$name::[<encode_ $name _rm16_imm16>](dst_mem, imm16))?;
+                            asm._emit_encoded_instruction(enc::$name::[<encode_ $name _rm16_imm16>](dst_mem, imm16))
                         }
                         Size::Bit32 => {
                             let imm32 = enc_models::Immediate32::from_i32(src_value);
-                            asm._emit_encoded_instruction(enc::$name::[<encode_ $name _rm32_imm32>](dst_mem, imm32))?;
+                            asm._emit_encoded_instruction(enc::$name::[<encode_ $name _rm32_imm32>](dst_mem, imm32))
                         }
                         Size::Bit64 => {
                             let imm32 = enc_models::Immediate32::from_i32(src_value);
-                            asm._emit_encoded_instruction(enc::$name::[<encode_ $name _rm64_imm32>](dst_mem, imm32))?;
+                            asm._emit_encoded_instruction(enc::$name::[<encode_ $name _rm64_imm32>](dst_mem, imm32))
                         }
-                    }
+                    }?;
                 }
                 Ok(())
             }

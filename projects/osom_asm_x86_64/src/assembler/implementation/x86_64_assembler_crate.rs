@@ -8,8 +8,10 @@ use crate::{assembler::EmitError, models::Instruction};
 use super::X86_64Assembler;
 
 mod const_encodings {
-    pub const RET: &[u8] = super::enc::ret::encode_ret().as_slice();
-    pub const CPUID: &[u8] = super::enc::singleton::encode_cpuid().as_slice();
+    pub(super) const RET: &[u8] = super::enc::ret::encode_ret().as_slice();
+    pub(super) const CPUID: &[u8] = super::enc::singleton::encode_cpuid().as_slice();
+    pub(super) const SYSCALL: &[u8] = super::enc::singleton::encode_syscall().as_slice();
+    pub(super) const LOCK: &[u8] = super::enc::singleton::encode_lock().as_slice();
 }
 
 impl X86_64Assembler {
@@ -99,6 +101,8 @@ impl X86_64Assembler {
             Instruction::Pop_Reg { src } => instructions::emit_pop_reg(self, *src),
             Instruction::Pop_Mem { src } => instructions::emit_pop_mem(self, src),
             Instruction::Int_Imm { src } => instructions::emit_int_imm(self, *src),
+            Instruction::Syscall => self._emit_bytes(const_encodings::SYSCALL),
+            Instruction::Lock => self._emit_bytes(const_encodings::LOCK),
         }
     }
 }

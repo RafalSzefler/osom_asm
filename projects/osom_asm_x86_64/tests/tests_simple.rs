@@ -26,6 +26,27 @@ fn test_simple_mov() {
 }
 
 #[rstest]
+#[case(GPR::RAX, 1, &[0x48, 0x83, 0xC0, 0x01])]
+#[case(GPR::EAX, 1, &[0x83, 0xC0, 0x01])]
+#[case(GPR::AL, 1, &[0x04, 0x01])]
+#[case(GPR::RDI, 1, &[0x48, 0x83, 0xC7, 0x01])]
+#[case(GPR::R10, 1234, &[0x49, 0x81, 0xC2, 0xD2, 0x04, 0x00, 0x00])]
+fn test_add(#[case] gpr: GPR, #[case] imm: i32, #[case] expected: &[u8]) {
+    let mut assembler = X86_64AssemblerBuilder::new().build();
+    assembler
+        .emit(Instruction::Add_RegImm {
+            dst: gpr,
+            src: Immediate32::new(imm),
+        })
+        .unwrap();
+
+    let mut final_code = Vec::new();
+    let result = assembler.assemble(&mut final_code).unwrap();
+    assert_eq_hex!(final_code, expected);
+    assert_eq!(result.emitted_bytes(), expected.len() as i32);
+}
+
+#[rstest]
 #[case(true, &[0x48, 0x31, 0xC0, 0xEB, 0xFB, 0xC3])]
 #[case(false, &[0x48, 0x31, 0xC0, 0xE9, 0xF8, 0xFF, 0xFF, 0xFF, 0xC3])]
 fn test_jmp(#[case] with_relaxation: bool, #[case] expected: &[u8]) {
@@ -250,6 +271,28 @@ fn test_predefined_labels() {
     let result = assembler.assemble(&mut final_code).unwrap();
     assert!(result.public_labels_positions().is_empty());
     let expected = &[0xEB, 0xEF, 0xC3];
+    assert_eq_hex!(final_code, expected);
+    assert_eq!(result.emitted_bytes(), expected.len() as i32);
+}
+
+#[test]
+fn test_syscall_and_lock() {
+    let mut assembler = X86_64AssemblerBuilder::new().build();
+
+    assembler.emit(Instruction::Lock).unwrap();
+    assembler
+        .emit(Instruction::Add_MemImm {
+            dst: Memory::based(GPR::RAX, Immediate32::ZERO).unwrap(),
+            src: Immediate32::new(1),
+        })
+        .unwrap();
+    assembler.emit(Instruction::Syscall).unwrap();
+    assembler.emit(Instruction::Ret).unwrap();
+
+    let mut final_code = Vec::new();
+    let result = assembler.assemble(&mut final_code).unwrap();
+    assert!(result.public_labels_positions().is_empty());
+    let expected = &[0xF0, 0x80, 0x00, 0x01, 0x0F, 0x05, 0xC3];
     assert_eq_hex!(final_code, expected);
     assert_eq!(result.emitted_bytes(), expected.len() as i32);
 }

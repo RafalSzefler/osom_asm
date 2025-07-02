@@ -170,4 +170,12 @@ pub enum Instruction {
     ///
     /// The value of `src` has to be an 8-bit unsigned integer.
     Int_Imm { src: Immediate32 },
+
+    /// `syscall`
+    Syscall,
+
+    /// Pseudoinstruction: this is lock prefix. It doesn't really
+    /// exist as a standalone machine code instruction, but it should
+    /// be followed by an instruction that it applies to.
+    Lock,
 }
