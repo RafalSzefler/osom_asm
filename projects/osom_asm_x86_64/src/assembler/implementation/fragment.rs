@@ -1,19 +1,19 @@
-#![allow(non_camel_case_types)]
+#![allow(non_camel_case_types, clippy::cast_possible_wrap)]
 use crate::models::{Condition, Label};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(transparent)]
 #[must_use]
 pub struct FragmentOrderId {
-    value: u32,
+    value: i32,
 }
 
 impl FragmentOrderId {
-    pub fn from_index(offset: u32) -> Self {
+    pub fn from_index(offset: i32) -> Self {
         Self { value: offset }
     }
 
-    pub fn index(self) -> u32 {
+    pub fn index(self) -> i32 {
         self.value
     }
 }
@@ -28,8 +28,8 @@ pub enum RelaxationVariant {
 #[derive(Debug)]
 pub enum Fragment {
     Bytes {
-        data_length: u32,
-        capacity: u32,
+        data_length: i32,
+        capacity: i32,
     },
     Relaxable_Jump {
         variant: RelaxationVariant,
@@ -46,25 +46,25 @@ pub mod const_sizes {
     use osom_encoders_x86_64::encoders as enc;
     use osom_encoders_x86_64::models as enc_models;
 
-    pub const SHORT_JUMP: u32 = const {
+    pub const SHORT_JUMP: i32 = const {
         enc::jmp::encode_jmp_imm8(enc_models::Immediate8::from_i8(0))
             .as_slice()
-            .len() as u32
+            .len() as i32
     };
-    pub const LONG_JUMP: u32 = const {
+    pub const LONG_JUMP: i32 = const {
         enc::jmp::encode_jmp_imm32(enc_models::Immediate32::from_i32(0))
             .as_slice()
-            .len() as u32
+            .len() as i32
     };
-    pub const SHORT_COND_JUMP: u32 = const {
+    pub const SHORT_COND_JUMP: i32 = const {
         enc::jcc::encode_jcc_A_imm8(enc_models::Immediate8::from_i8(0))
             .as_slice()
-            .len() as u32
+            .len() as i32
     };
-    pub const LONG_COND_JUMP: u32 = const {
+    pub const LONG_COND_JUMP: i32 = const {
         enc::jcc::encode_jcc_A_imm32(enc_models::Immediate32::from_i32(0))
             .as_slice()
-            .len() as u32
+            .len() as i32
     };
 
     const _CHECK: () = const {
@@ -83,11 +83,11 @@ impl Fragment {
     #[allow(clippy::cast_ptr_alignment)]
     pub unsafe fn next(&self) -> *mut Fragment {
         let offset = match self {
-            Fragment::Bytes { capacity, .. } => *capacity as usize,
-            _ => size_of::<Fragment>(),
+            Fragment::Bytes { capacity, .. } => *capacity as isize,
+            _ => size_of::<Fragment>() as isize,
         };
         let raw_ptr = std::ptr::from_ref::<Fragment>(self).cast_mut().cast::<u8>();
-        unsafe { raw_ptr.add(offset) }.cast::<Fragment>()
+        unsafe { raw_ptr.offset(offset) }.cast::<Fragment>()
     }
 
     #[inline(always)]
@@ -97,7 +97,7 @@ impl Fragment {
         unsafe { std::slice::from_raw_parts(ptr, len) }
     }
 
-    pub fn data_length(&self) -> u32 {
+    pub fn data_length(&self) -> i32 {
         match self {
             Fragment::Bytes { data_length, .. } => *data_length,
             Fragment::Relaxable_Jump { variant, .. } => match variant {

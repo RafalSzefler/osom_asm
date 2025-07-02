@@ -1,6 +1,8 @@
 #![cfg(target_arch = "x86_64")]
+use std::{collections::HashMap, io::Write};
+
 use osom_asm_x86_64::{
-    assembler::X86_64Assembler,
+    assembler::X86_64AssemblerBuilder,
     models::{Condition, GPR, Immediate32, Immediate64, Instruction, Label, Memory},
 };
 
@@ -15,7 +17,7 @@ use rstest::rstest;
 #[case(false)]
 #[case(true)]
 fn test_simple_execution(#[case] with_relaxation: bool) {
-    let mut assembler = X86_64Assembler::new(with_relaxation);
+    let mut assembler = X86_64AssemblerBuilder::new().with_relaxation(with_relaxation).build();
     assembler
         .emit(Instruction::Mov_RegImm {
             dst: GPR::RAX,
@@ -34,7 +36,7 @@ fn test_simple_execution(#[case] with_relaxation: bool) {
 #[case(false)]
 #[case(true)]
 fn test_with_jumps(#[case] with_relaxation: bool) {
-    let mut assembler = X86_64Assembler::new(with_relaxation);
+    let mut assembler = X86_64AssemblerBuilder::new().with_relaxation(with_relaxation).build();
     let label = Label::new();
     assembler
         .emit(Instruction::Mov_RegImm {
@@ -64,7 +66,7 @@ fn test_with_jumps(#[case] with_relaxation: bool) {
 #[case(0)]
 #[case(123456)]
 fn test_patchable_load(#[case] value: i32) {
-    let mut assembler = X86_64Assembler::new(true);
+    let mut assembler = X86_64AssemblerBuilder::new().with_relaxation(true).build();
     let label = Label::new();
     assembler
         .emit(Instruction::Mov_RegMem {
@@ -91,7 +93,7 @@ fn test_patchable_load(#[case] value: i32) {
 #[case(0)]
 #[case(123456)]
 fn test_pass_and_return(#[case] value: i32) {
-    let mut assembler = X86_64Assembler::new(true);
+    let mut assembler = X86_64AssemblerBuilder::new().with_relaxation(true).build();
     assembler
         .emit(Instruction::Mov_RegReg {
             dst: GPR::RAX,
@@ -111,7 +113,7 @@ fn test_pass_and_return(#[case] value: i32) {
 #[case(false)]
 #[case(true)]
 fn test_cmp_reg_imm(#[case] with_relaxation: bool) {
-    let mut assembler = X86_64Assembler::new(with_relaxation);
+    let mut assembler = X86_64AssemblerBuilder::new().with_relaxation(with_relaxation).build();
     let label = Label::new();
     assembler
         .emit(Instruction::Xor_RegReg {
@@ -161,7 +163,7 @@ fn test_cmp_reg_imm(#[case] with_relaxation: bool) {
 #[case(false)]
 #[case(true)]
 fn test_jmp_reg(#[case] with_relaxation: bool) {
-    let mut assembler = X86_64Assembler::new(with_relaxation);
+    let mut assembler = X86_64AssemblerBuilder::new().with_relaxation(with_relaxation).build();
 
     const VALUE: i64 = -100;
 
@@ -186,7 +188,7 @@ fn test_jmp_reg(#[case] with_relaxation: bool) {
 #[case(false)]
 #[case(true)]
 fn test_jmp_mem(#[case] with_relaxation: bool) {
-    let mut assembler = X86_64Assembler::new(with_relaxation);
+    let mut assembler = X86_64AssemblerBuilder::new().with_relaxation(with_relaxation).build();
 
     const VALUE: i64 = 1731;
 
@@ -217,7 +219,7 @@ fn test_jmp_mem(#[case] with_relaxation: bool) {
 #[case(false)]
 #[case(true)]
 fn test_call_reg(#[case] with_relaxation: bool) {
-    let mut assembler = X86_64Assembler::new(with_relaxation);
+    let mut assembler = X86_64AssemblerBuilder::new().with_relaxation(with_relaxation).build();
 
     const VALUE: i64 = 555;
 
@@ -243,7 +245,7 @@ fn test_call_reg(#[case] with_relaxation: bool) {
 #[case(false)]
 #[case(true)]
 fn test_call_mem(#[case] with_relaxation: bool) {
-    let mut assembler = X86_64Assembler::new(with_relaxation);
+    let mut assembler = X86_64AssemblerBuilder::new().with_relaxation(with_relaxation).build();
 
     const VALUE: i64 = 666;
 
@@ -275,7 +277,7 @@ fn test_call_mem(#[case] with_relaxation: bool) {
 #[case(false)]
 #[case(true)]
 fn test_call_label(#[case] with_relaxation: bool) {
-    let mut assembler = X86_64Assembler::new(with_relaxation);
+    let mut assembler = X86_64AssemblerBuilder::new().with_relaxation(with_relaxation).build();
 
     let label = Label::new();
 
@@ -301,7 +303,7 @@ fn test_call_label(#[case] with_relaxation: bool) {
 #[case(false)]
 #[case(true)]
 fn test_call_with_public_label_and_backwards(#[case] with_relaxation: bool) {
-    let mut assembler = X86_64Assembler::new(with_relaxation);
+    let mut assembler = X86_64AssemblerBuilder::new().with_relaxation(with_relaxation).build();
 
     const RESULT: i32 = 17;
 
@@ -335,7 +337,7 @@ fn test_call_with_public_label_and_backwards(#[case] with_relaxation: bool) {
 #[case(false)]
 #[case(true)]
 fn test_fibonacci(#[case] with_relaxation: bool) {
-    let mut assembler = X86_64Assembler::new(with_relaxation);
+    let mut assembler = X86_64AssemblerBuilder::new().with_relaxation(with_relaxation).build();
 
     let entry = Label::new();
     let recursion_entry = Label::new();
@@ -438,5 +440,53 @@ fn test_fibonacci(#[case] with_relaxation: bool) {
 
     for i in -100..20 {
         assert_eq!(unsafe { fn_ptr(i) }, fibonacci(i));
+    }
+}
+
+#[test]
+fn test_jump_backwards_to_predefined_label() {
+    let mut assembler = X86_64AssemblerBuilder::new().build();
+    let predefined_label = Label::new();
+
+    assembler
+        .emit(Instruction::SetPublic_Label {
+            label: predefined_label,
+        })
+        .unwrap();
+    assembler
+        .emit(Instruction::Mov_RegReg {
+            dst: GPR::EAX,
+            src: GPR::EDI,
+        })
+        .unwrap();
+    assembler.emit(Instruction::Ret).unwrap();
+
+    let mut stream = RegionStream::new();
+    let result = assembler.assemble(&mut stream).unwrap();
+
+    let label_position = *result.public_labels_positions().get(&predefined_label).unwrap();
+    assert_eq!(label_position, 0);
+
+    const OFFSET: i32 = 256;
+    let diff = OFFSET - result.emitted_bytes();
+    assert!(diff > 0);
+
+    let mut missing = Vec::with_capacity(diff as usize);
+    missing.resize(diff as usize, 0);
+    stream.write_all(&missing).unwrap();
+
+    let predefined_labels = HashMap::from([(predefined_label, -OFFSET)]);
+    let mut assembler = X86_64AssemblerBuilder::new()
+        .with_predefined_labels(&predefined_labels)
+        .build();
+    assembler
+        .emit(Instruction::Jump_Label { dst: predefined_label })
+        .unwrap();
+
+    let _ = assembler.assemble(&mut stream).unwrap();
+    let fn_ptr = convert_to_fn_with_offset!("sysv64", stream, OFFSET, fn(i32) -> i32);
+
+    for i in -1000..1000 {
+        assert_eq!(unsafe { fn_ptr(i) }, i);
     }
 }

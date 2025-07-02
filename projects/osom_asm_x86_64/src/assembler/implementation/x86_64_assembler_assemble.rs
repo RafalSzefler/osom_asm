@@ -1,5 +1,4 @@
 #![allow(
-    unused_unsafe,
     clippy::checked_conversions,
     clippy::cast_possible_wrap,
     clippy::cast_sign_loss,
@@ -33,7 +32,7 @@ impl X86_64Assembler {
     }
 }
 
-fn calculate_initial_offsets(asm: &X86_64Assembler) -> Result<HashMap<FragmentOrderId, u32>, AssembleError> {
+fn calculate_initial_offsets(asm: &X86_64Assembler) -> Result<HashMap<FragmentOrderId, i32>, AssembleError> {
     let mut result = HashMap::with_capacity(asm.fragments_count as usize);
 
     let start = fragment_at_index!(asm, 0) as *const Fragment;
@@ -42,7 +41,7 @@ fn calculate_initial_offsets(asm: &X86_64Assembler) -> Result<HashMap<FragmentOr
         let u8_fragment = fragment.cast::<u8>();
         let u8_start = start.cast::<u8>();
         let ptr_diff = unsafe { u8_fragment.offset_from(u8_start) };
-        FragmentOrderId::from_index(ptr_diff as u32)
+        FragmentOrderId::from_index(ptr_diff as i32)
     };
 
     let mut current_fragment = start;
@@ -66,7 +65,7 @@ const MAGIC_SHIFT: isize = 3;
 
 fn relax_instructions_and_update_offsets(
     asm: &mut X86_64Assembler,
-    offsets: &mut HashMap<FragmentOrderId, u32>,
+    offsets: &mut HashMap<FragmentOrderId, i32>,
 ) -> Result<(), AssembleError> {
     let start = fragment_at_index_mut!(asm, 0) as *mut Fragment;
     let end = fragment_end!(asm);
@@ -75,10 +74,16 @@ fn relax_instructions_and_update_offsets(
         let u8_fragment = fragment.cast::<u8>();
         let u8_start = start.cast::<u8>();
         let ptr_diff = unsafe { u8_fragment.offset_from(u8_start) };
-        FragmentOrderId::from_index(ptr_diff as u32)
+
+        debug_assert!(
+            (i32::MIN as isize..=i32::MAX as isize).contains(&ptr_diff),
+            "Fragment offset is too large, got {ptr_diff} which doesn't fit in i32."
+        );
+
+        FragmentOrderId::from_index(ptr_diff as i32)
     };
 
-    let get_position = |label: &Label, offsets: &HashMap<FragmentOrderId, u32>| -> Result<u32, AssembleError> {
+    let get_position = |label: &Label, offsets: &HashMap<FragmentOrderId, i32>| -> Result<i32, AssembleError> {
         let Some(label_offset) = asm.label_offsets.get(label) else {
             return Err(AssembleError::LabelNotSet(*label));
         };
@@ -98,7 +103,7 @@ fn relax_instructions_and_update_offsets(
     macro_rules! update_subsequent_offsets {
         ($start:expr, $add:expr) => {{
             let start: *mut Fragment = $start;
-            let add: u32 = $add;
+            let add: i32 = $add;
             let mut current = unsafe { (*start).next() };
             while current.cast_const() < end {
                 let current_id = get_id(current);
@@ -163,8 +168,8 @@ fn relax_instructions_and_update_offsets(
 
 fn calculate_labels_map(
     asm: &X86_64Assembler,
-    offsets: &HashMap<FragmentOrderId, u32>,
-) -> Result<HashMap<Label, usize>, AssembleError> {
+    offsets: &HashMap<FragmentOrderId, i32>,
+) -> Result<HashMap<Label, i32>, AssembleError> {
     let mut result = HashMap::with_capacity(asm.label_offsets.len());
 
     for (label, label_offset) in &asm.label_offsets {
@@ -177,7 +182,7 @@ fn calculate_labels_map(
 
         let fragment_offset = offsets.get(&label_offset.fragment_id).unwrap();
         let position = *fragment_offset + relaxation_offset + label_offset.in_fragment_offset;
-        result.insert(*label, position as usize);
+        result.insert(*label, position);
     }
 
     Ok(result)
@@ -185,8 +190,8 @@ fn calculate_labels_map(
 
 fn patch_addresses(
     asm: &mut X86_64Assembler,
-    labels_map: &HashMap<Label, usize>,
-    offsets: &HashMap<FragmentOrderId, u32>,
+    labels_map: &HashMap<Label, i32>,
+    offsets: &HashMap<FragmentOrderId, i32>,
 ) -> Result<(), AssembleError> {
     unsafe {
         for (label, patchable_addresses) in &asm.patchable_addresses {
@@ -228,8 +233,8 @@ fn patch_addresses(
 
 fn emit_fragments(
     asm: &X86_64Assembler,
-    labels_map: &HashMap<Label, usize>,
-    offsets: &HashMap<FragmentOrderId, u32>,
+    labels_map: &HashMap<Label, i32>,
+    offsets: &HashMap<FragmentOrderId, i32>,
     stream: &mut impl std::io::Write,
 ) -> Result<EmissionData, AssembleError> {
     let start = fragment_at_index!(asm, 0) as *const Fragment;
@@ -243,21 +248,26 @@ fn emit_fragments(
         current = unsafe { current_fragment_ref.next() };
     }
 
+    debug_assert!(
+        emitted_bytes <= i32::MAX as usize,
+        "Emitted bytes is too large. Got: {emitted_bytes}"
+    );
+
     let mut public_labels = HashMap::with_capacity(asm.public_labels.len());
     for item in &asm.public_labels {
         let position = labels_map.get(item).unwrap();
         public_labels.insert(*item, *position);
     }
 
-    let emission_data = EmissionData::new(emitted_bytes, public_labels);
+    let emission_data = EmissionData::new(emitted_bytes as i32, public_labels);
     Ok(emission_data)
 }
 
 fn encode_fragment(
     asm: &X86_64Assembler,
     fragment: &Fragment,
-    labels_map: &HashMap<Label, usize>,
-    offsets: &HashMap<FragmentOrderId, u32>,
+    labels_map: &HashMap<Label, i32>,
+    offsets: &HashMap<FragmentOrderId, i32>,
     stream: &mut impl std::io::Write,
 ) -> Result<usize, AssembleError> {
     let start = fragment_at_index!(asm, 0) as *const Fragment;
@@ -265,7 +275,7 @@ fn encode_fragment(
         let u8_fragment = fragment.cast::<u8>();
         let u8_start = start.cast::<u8>();
         let ptr_diff = unsafe { u8_fragment.offset_from(u8_start) };
-        FragmentOrderId::from_index(ptr_diff as u32)
+        FragmentOrderId::from_index(ptr_diff as i32)
     };
 
     let get_fragment_position = |fragment: *const Fragment| {

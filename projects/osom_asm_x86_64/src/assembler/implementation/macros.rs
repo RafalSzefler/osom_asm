@@ -1,39 +1,54 @@
 macro_rules! fragment_at_index {
     ($asm:expr, $index:expr) => {{
+        let fragment;
+
+        #[allow(unused_unsafe)]
         unsafe {
-            &*(($asm)
+            fragment = &*(($asm)
                 .fragments
                 .as_ptr()
-                .add($index as usize)
-                .cast::<crate::assembler::implementation::fragment::Fragment>())
+                .offset($index as isize)
+                .cast::<crate::assembler::implementation::fragment::Fragment>());
         }
+
+        fragment
     }};
 }
 
 pub(super) use fragment_at_index;
 
 macro_rules! fragment_at_index_mut {
-    ($asm:expr, $index:expr) => {
+    ($asm:expr, $index:expr) => {{
+        let fragment;
+
+        #[allow(unused_unsafe)]
         unsafe {
-            &mut *(($asm)
+            fragment = &mut *(($asm)
                 .fragments
                 .as_mut_ptr()
-                .add($index as usize)
-                .cast::<crate::assembler::implementation::fragment::Fragment>())
+                .offset($index as isize)
+                .cast::<crate::assembler::implementation::fragment::Fragment>());
         }
-    };
+
+        fragment
+    }};
 }
 
 pub(super) use fragment_at_index_mut;
 
 macro_rules! fragment_end {
-    ($asm:expr) => {
+    ($asm:expr) => {{
+        let fragment;
+
+        #[allow(unused_unsafe)]
         unsafe {
-            crate::assembler::implementation::macros::fragment_at_index!($asm, $asm.last_fragment_offset)
+            fragment = crate::assembler::implementation::macros::fragment_at_index!($asm, $asm.last_fragment_offset)
                 .next()
-                .cast_const()
+                .cast_const();
         }
-    };
+
+        fragment
+    }};
 }
 
 pub(super) use fragment_end;

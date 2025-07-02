@@ -6,8 +6,8 @@ use crate::models::Label;
 /// It allows the data to be mutated and moved around.
 #[must_use]
 pub struct DeconstructedEmissionData {
-    pub emitted_bytes: usize,
-    pub labels_to_position_map: HashMap<Label, usize>,
+    pub emitted_bytes: i32,
+    pub public_labels_positions: HashMap<Label, i32>,
 }
 
 /// The summary of the assembled code. This struct is immutable.
@@ -16,13 +16,13 @@ pub struct DeconstructedEmissionData {
 #[derive(Debug)]
 #[must_use]
 pub struct EmissionData {
-    emitted_bytes: usize,
-    public_labels_positions: HashMap<Label, usize>,
+    emitted_bytes: i32,
+    public_labels_positions: HashMap<Label, i32>,
 }
 
 impl EmissionData {
     #[inline(always)]
-    pub(crate) fn new(emitted_bytes: usize, public_labels_positions: HashMap<Label, usize>) -> Self {
+    pub(crate) fn new(emitted_bytes: i32, public_labels_positions: HashMap<Label, i32>) -> Self {
         Self {
             emitted_bytes,
             public_labels_positions,
@@ -37,7 +37,7 @@ impl EmissionData {
         forget(self);
         DeconstructedEmissionData {
             emitted_bytes,
-            labels_to_position_map,
+            public_labels_positions: labels_to_position_map,
         }
     }
 
@@ -45,14 +45,14 @@ impl EmissionData {
     /// relative to the beginning of the code, not to the passed stream.
     #[inline(always)]
     #[must_use]
-    pub const fn public_labels_positions(&self) -> &HashMap<Label, usize> {
+    pub const fn public_labels_positions(&self) -> &HashMap<Label, i32> {
         &self.public_labels_positions
     }
 
     /// Returns the number of bytes emitted.
     #[inline(always)]
     #[must_use]
-    pub const fn emitted_bytes(&self) -> usize {
+    pub const fn emitted_bytes(&self) -> i32 {
         self.emitted_bytes
     }
 }

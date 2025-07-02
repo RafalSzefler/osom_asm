@@ -15,7 +15,7 @@ use super::macros::{fragment_at_index, fragment_at_index_mut};
 #[must_use]
 pub(super) struct FragmentRelativePosition {
     pub fragment_id: FragmentOrderId,
-    pub in_fragment_offset: u32,
+    pub in_fragment_offset: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -41,13 +41,32 @@ pub struct X86_64Assembler {
     pub(super) patchable_addresses: HashMap<Label, InlineVec<PatchableImm32Instruction, 5>>,
     pub(super) public_labels: Vec<Label>,
     pub(super) fragments: Vec<u8>,
-    pub(super) last_fragment_offset: u32,
+    pub(super) last_fragment_offset: i32,
     pub(super) fragments_count: u32,
     pub(super) with_relaxation: bool,
 }
 
-const FRAGMENT_SIZE: u32 = size_of::<Fragment>() as u32;
-const FRAGMENT_ALIGNMENT: u32 = align_of::<Fragment>() as u32;
+#[allow(clippy::cast_possible_wrap)]
+const FRAGMENT_SIZE: i32 = const {
+    let size = size_of::<Fragment>();
+    assert!(
+        size > 0 && size <= i32::MAX as usize,
+        "Fragment size is too large, doesn't fit in i32."
+    );
+    size as i32
+};
+
+#[allow(clippy::cast_possible_wrap)]
+const FRAGMENT_ALIGNMENT: i32 = const {
+    let alignment = align_of::<Fragment>();
+    assert!(
+        alignment > 0 && alignment <= i32::MAX as usize,
+        "Fragment alignment is too large, doesn't fit in i32."
+    );
+    alignment as i32
+};
+
+const MAX_BYTE_ARRAY_LENGTH: usize = (i32::MAX - 2048) as usize;
 
 impl X86_64Assembler {
     /// Creates a new `X86_64` assembler.
@@ -56,7 +75,7 @@ impl X86_64Assembler {
     ///
     /// * `with_relaxation` - whether to enable relaxation optimization or not.
     #[inline(always)]
-    pub fn new(with_relaxation: bool) -> Self {
+    pub(super) fn new(with_relaxation: bool, predefined_labels: HashMap<Label, FragmentRelativePosition>) -> Self {
         let mut fragments = Vec::<u8>::with_capacity(1 << 12);
         let initial_fragment = Fragment::Bytes {
             data_length: 0,
@@ -65,7 +84,7 @@ impl X86_64Assembler {
         fragments.extend_from_slice(initial_fragment.slice_of_header());
 
         Self {
-            label_offsets: HashMap::with_capacity(16),
+            label_offsets: predefined_labels,
             patchable_addresses: HashMap::with_capacity(16),
             public_labels: Vec::with_capacity(4),
             fragments: fragments,
@@ -79,7 +98,17 @@ impl X86_64Assembler {
         if bytes.is_empty() {
             return;
         }
-        let bytes_len = bytes.len() as u32;
+
+        assert!(
+            bytes.len() <= MAX_BYTE_ARRAY_LENGTH,
+            "Bytes length is too large, expected at most {} bytes, got {}.",
+            MAX_BYTE_ARRAY_LENGTH,
+            bytes.len()
+        );
+
+        #[allow(clippy::cast_possible_wrap)]
+        let bytes_len = bytes.len() as i32;
+
         let current_fragment = fragment_at_index_mut!(self, self.last_fragment_offset);
         if let Fragment::Bytes { data_length, capacity } = current_fragment {
             *data_length += bytes_len;
@@ -116,24 +145,49 @@ impl X86_64Assembler {
         }
     }
 
-    #[allow(clippy::needless_pass_by_value)]
+    #[allow(clippy::needless_pass_by_value, clippy::checked_conversions)]
     pub(super) fn _push_new_fragment(&mut self, fragment: Fragment) {
         let current_fragment = fragment_at_index!(self, self.last_fragment_offset);
         let padding = match current_fragment {
             Fragment::Bytes { data_length, capacity } => *capacity - *data_length - FRAGMENT_SIZE,
             _ => 0,
         };
-        debug_assert!(
+        assert!(
             padding <= FRAGMENT_ALIGNMENT,
             "Padding is too large, expected at most {FRAGMENT_ALIGNMENT} bytes, got {padding}"
         );
+
+        #[allow(clippy::cast_sign_loss)]
         if padding > 0 {
             let buffer = [0; FRAGMENT_ALIGNMENT as usize];
             let slice = &buffer[..padding as usize];
+
+            {
+                let new_size = self.fragments.len() + padding as usize;
+                assert!(
+                    new_size <= i32::MAX as usize,
+                    "Fragments length is too large, got {new_size} which doesn't fit in i32."
+                );
+            }
+
             self.fragments.extend_from_slice(slice);
         }
-        self.last_fragment_offset = self.fragments.len() as u32;
-        self.fragments.extend_from_slice(fragment.slice_of_header());
+
+        let fragment_as_slice = fragment.slice_of_header();
+
+        {
+            let new_size = self.fragments.len() + fragment_as_slice.len();
+            assert!(
+                new_size <= i32::MAX as usize,
+                "Fragments length is too large, got {new_size} which doesn't fit in i32."
+            );
+        }
+
+        #[allow(clippy::cast_possible_wrap)]
+        {
+            self.last_fragment_offset = self.fragments.len() as i32;
+        }
+        self.fragments.extend_from_slice(fragment_as_slice);
         self.fragments_count += 1;
     }
 
@@ -158,11 +212,5 @@ impl X86_64Assembler {
     #[inline(always)]
     pub(super) fn _push_patchable_instruction(&mut self, label: Label, patch_info: PatchableImm32Instruction) {
         self.patchable_addresses.entry(label).or_default().push(patch_info);
-    }
-}
-
-impl Default for X86_64Assembler {
-    fn default() -> Self {
-        Self::new(true)
     }
 }
