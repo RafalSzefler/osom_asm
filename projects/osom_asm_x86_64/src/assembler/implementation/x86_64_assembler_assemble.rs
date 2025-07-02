@@ -23,6 +23,7 @@ use super::macros::{fragment_at_index, fragment_at_index_mut};
 use super::{X86_64Assembler, fragment::Fragment};
 
 impl X86_64Assembler {
+    /// Finalizes emitted code, optimizes it and writes the raw binary machine code back to the passed stream.
     pub fn assemble(mut self, stream: &mut impl std::io::Write) -> Result<EmissionData, AssembleError> {
         let mut offsets = calculate_initial_offsets(&self)?;
         relax_instructions_and_update_offsets(&mut self, &mut offsets)?;
