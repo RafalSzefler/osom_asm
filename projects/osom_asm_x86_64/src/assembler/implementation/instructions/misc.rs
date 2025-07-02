@@ -33,9 +33,9 @@ pub fn emit_int_imm(asm: &mut X86_64Assembler, src: Immediate32) -> Result<(), E
     let value = value as u8;
 
     let instruction = match value {
-        1 => enc::singleton::encode_int1(),
-        3 => enc::singleton::encode_int3(),
-        _ => enc::singleton::encode_int_imm8(enc_models::Immediate8::from_u8(value)),
+        1 => enc::int::encode_int_1(),
+        3 => enc::int::encode_int_3(),
+        _ => enc::int::encode_int_imm8(enc_models::Immediate8::from_u8(value)),
     };
     asm._emit_encoded_instruction(instruction)?;
     Ok(())
